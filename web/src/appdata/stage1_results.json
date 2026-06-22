@@ -1,41 +1,19 @@
 {
   "comparison": [
-    {
-      "model": "IsolationForest",
-      "pr_auc": 0.0546,
-      "roc_auc": 0.9022,
-      "recall_at_50": 0.286,
-      "recall_at_100": 0.714
-    },
-    {
-      "model": "OneClassSVM",
-      "pr_auc": 0.2663,
-      "roc_auc": 0.9587,
-      "recall_at_50": 0.714,
-      "recall_at_100": 0.857
-    },
-    {
-      "model": "LOF",
-      "pr_auc": 0.3412,
-      "roc_auc": 0.9774,
-      "recall_at_50": 0.857,
-      "recall_at_100": 1.0
-    },
-    {
-      "model": "Mahalanobis",
-      "pr_auc": 0.2739,
-      "roc_auc": 0.9557,
-      "recall_at_50": 0.714,
-      "recall_at_100": 0.714
-    },
-    {
-      "model": "AutoEncoder(DL)",
-      "pr_auc": 0.2107,
-      "roc_auc": 0.9302,
-      "recall_at_50": 0.571,
-      "recall_at_100": 0.857
-    }
+    {"model": "Ensemble(rank)", "pr_auc": 0.304, "roc_auc": 0.960, "recall_at_50": 0.80, "recall_at_100": 0.90},
+    {"model": "Mahalanobis", "pr_auc": 0.295, "roc_auc": 0.954, "recall_at_50": 0.71, "recall_at_100": 0.81},
+    {"model": "OneClassSVM", "pr_auc": 0.294, "roc_auc": 0.958, "recall_at_50": 0.72, "recall_at_100": 0.89},
+    {"model": "LOF", "pr_auc": 0.294, "roc_auc": 0.962, "recall_at_50": 0.86, "recall_at_100": 0.94},
+    {"model": "AutoEncoder(DL)", "pr_auc": 0.215, "roc_auc": 0.887, "recall_at_50": 0.57, "recall_at_100": 0.67},
+    {"model": "IsolationForest", "pr_auc": 0.119, "roc_auc": 0.950, "recall_at_50": 0.29, "recall_at_100": 0.84}
   ],
+  "note_cv": "30-seed 반복 CV mean (양성 7건 노이즈 제거). 고전 ML > DL(불안정).",
+  "feature_best": {
+    "base_best": 0.308,
+    "eng_best": 0.446,
+    "eng_model": "Mahalanobis (선별 교호작용+step, 16d)",
+    "note": "결함=센서 조합 → 교호작용 피처로 0.30→0.45. 무차별 전수조합(36d)은 0.07로 붕괴(차원의저주)."
+  },
   "feature_contrib": {
     "temperature_c": 1.37,
     "pressure_torr": -2.306,

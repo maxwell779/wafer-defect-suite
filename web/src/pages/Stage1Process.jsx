@@ -158,7 +158,9 @@ export default function Stage1Process({ live }) {
             ))}
           </tbody>
         </table>
-        <div className="note" style={{ marginTop: 12 }}>결론 — <b>LOF(고전 ML)가 AutoEncoder(DL)를 크게 앞섬</b> → 양성 7건·6변수 소표본엔 딥러닝 불필요. 상위 100개(10%) 검토로 결함 전부 포착(recall 1.0).</div>
+        <div className="note" style={{ marginTop: 12 }}>결론 — <b>고전 ML(rank-앙상블 0.304) &gt; DL(AE 0.215, 불안정)</b> (30-seed CV). 양성 7건엔 딥러닝 불필요.
+          {s1.feature_best && <> <b style={{ color: "var(--green)" }}>★ 선별 교호작용 피처로 PR-AUC {s1.feature_best.base_best}→{s1.feature_best.eng_best}</b>({s1.feature_best.eng_model}) — "결함=센서 조합" 메커니즘 정합. 무차별 전수조합은 차원의 저주로 붕괴.</>}
+        </div>
       </Card>
     </div>
   );
