@@ -42,12 +42,13 @@ def main():
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--subset", type=int, default=0, help=">0 이면 빠른 스모크용 일부만")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--augment", action="store_true", help="실제모사 증강(노이즈+회전) — A 진단실험")
     args = ap.parse_args()
 
     set_seed(config.SEED)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
-    out = config.EXPERIMENTS / f"stage2_{args.loss}_w{args.width}"
+    out = config.EXPERIMENTS / f"stage2_{args.loss}_w{args.width}{'_aug' if args.augment else ''}"
     out.mkdir(parents=True, exist_ok=True)
 
     # ── data ──────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ def main():
 
     dl = lambda ds, sh: DataLoader(ds, batch_size=args.batch, shuffle=sh,
                                    num_workers=args.workers, pin_memory=(device == "cuda"))
-    tr_dl = dl(WaferMapDataset(X, Y, tr), True)
+    tr_dl = dl(WaferMapDataset(X, Y, tr, augment=args.augment, seed=config.SEED), True)
     va_dl = dl(WaferMapDataset(X, Y, va), False)
     te_dl = dl(WaferMapDataset(X, Y, te), False)
 

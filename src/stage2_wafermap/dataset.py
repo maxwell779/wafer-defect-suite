@@ -33,16 +33,34 @@ def make_splits(Y, seed=42, val=0.15, test=0.15):
     return tr, va, te
 
 
+def _augment_map(m, rng, max_noise=0.15):
+    """실제 도메인 모사 증강: 회전/플립 + 배경 노이즈(정상다이 일부→불량).
+    라벨은 방향·노이즈에 불변이라 안전. (A 실험: 노이즈가 전이갭 원인인지 검증)"""
+    if rng.random() < 0.5:
+        m = m[:, ::-1]
+    if rng.random() < 0.5:
+        m = m[::-1, :]
+    m = np.rot90(m, int(rng.integers(0, 4))).copy()
+    p = float(rng.random()) * max_noise          # 0~max_noise 비율의 정상다이를 불량으로
+    flip = (m == 1) & (rng.random(m.shape) < p)
+    m[flip] = 2
+    return np.ascontiguousarray(m)
+
+
 class WaferMapDataset(Dataset):
-    def __init__(self, X, Y, idx):
+    def __init__(self, X, Y, idx, augment=False, seed=0):
         self.X = X[idx]
         self.Y = Y[idx]
+        self.augment = augment
+        self.rng = np.random.default_rng(seed)
 
     def __len__(self):
         return len(self.X)
 
     def __getitem__(self, i):
         m = self.X[i]  # (52,52) in {0,1,2}
+        if self.augment:
+            m = _augment_map(m, self.rng)
         oh = np.stack([(m == 0), (m == 1), (m == 2)], axis=0).astype(np.float32)  # 3ch one-hot
         return torch.from_numpy(oh), torch.from_numpy(self.Y[i])
 
