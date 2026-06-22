@@ -11,8 +11,9 @@
   "feature_best": {
     "base_best": 0.308,
     "eng_best": 0.446,
-    "eng_model": "Mahalanobis (선별 교호작용+step, 16d)",
-    "note": "결함=센서 조합 → 교호작용 피처로 0.30→0.45. 무차별 전수조합(36d)은 0.07로 붕괴(차원의저주)."
+    "targeted_best": 0.779,
+    "eng_model": "Mahalanobis + 표적 교호작용(저압×고온/식각)",
+    "note": "결함 7건 전부 pressure≤-2σ+고온/식각 → 메커니즘 표적 피처로 PR-AUC 0.39→0.78(leak-free). 도메인 인코딩이 핵심."
   },
   "feature_contrib": {
     "temperature_c": 1.37,

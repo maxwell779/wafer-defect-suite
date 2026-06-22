@@ -16,10 +16,14 @@ FEATS = ["temperature_c", "pressure_torr", "gas_flow_sccm", "etch_rate_nm_min", 
 SAMPLES = Path(__file__).resolve().parent / "samples.npz"
 
 
-def _eng(X):
-    """6 raw → 11 (base + 비율·전력·교호) — Stage1 best 피처(결함=센서 조합)."""
+def _eng(X, mu=None, sd=None):
+    """6 raw → 교호작용 + ★표적(저압×고온/식각) 피처. Stage1 best(PR-AUC 0.78)."""
     t, p, g, e, v, c = X.T
-    return np.c_[X, p / (e + 1e-6), t / (p + 1e-6), e * t, v * c, g / (p + 1e-6)]
+    f = np.c_[X, p / (e + 1e-6), t / (p + 1e-6), e * t, v * c, g / (p + 1e-6)]
+    if mu is not None:                                    # 결함 메커니즘 표적 인코딩
+        zp = -(p - mu[1]) / sd[1]; zt = (t - mu[0]) / sd[0]; ze = (e - mu[3]) / sd[3]
+        f = np.c_[f, np.maximum(zp, 0) * np.maximum(zt + ze, 0), zp * ze, zp * zt]
+    return f
 
 
 # ── Stage 1 (sklearn — 교호작용 피처 + Mahalanobis, best) ──────────────
@@ -31,15 +35,17 @@ class Stage1:
         df = pd.read_csv(config.MERUVA_CSV)
         X = df[FEATS].to_numpy(float); y = df["defect_label"].to_numpy(int)
         Xn = X[y == 0]
-        self.mean, self.std = Xn.mean(0), Xn.std(0)            # recommendations용(raw)
-        self.sc = StandardScaler().fit(_eng(Xn))               # 교호작용 피처 스케일
-        self.ee = EllipticEnvelope(contamination=0.05, random_state=config.SEED).fit(self.sc.transform(_eng(Xn)))
-        s = -self.ee.score_samples(self.sc.transform(_eng(X)))
+        self.mean, self.std = Xn.mean(0), Xn.std(0)            # raw 통계(표적피처·recommendations)
+        feat = lambda A: _eng(A, self.mean, self.std)
+        self.feat = feat
+        self.sc = StandardScaler().fit(feat(Xn))               # 표적 교호작용 피처
+        self.ee = EllipticEnvelope(contamination=0.05, random_state=config.SEED).fit(self.sc.transform(feat(Xn)))
+        s = -self.ee.score_samples(self.sc.transform(feat(X)))
         self.smin, self.smax = float(s.min()), float(s.max())
 
     def score(self, params: dict):
         x = np.array([[float(params[f]) for f in FEATS]])
-        s = float(-self.ee.score_samples(self.sc.transform(_eng(x)))[0])
+        s = float(-self.ee.score_samples(self.sc.transform(self.feat(x)))[0])
         norm = (s - self.smin) / (self.smax - self.smin + 1e-9)
         z = {f: float((x[0, i] - self.mean[i]) / (self.std[i] + 1e-9)) for i, f in enumerate(FEATS)}
         recs = []
