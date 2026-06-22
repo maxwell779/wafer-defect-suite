@@ -57,21 +57,27 @@ def main():
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--imgsz", type=int, default=416)
     ap.add_argument("--model", default="yolo11n.pt")
+    ap.add_argument("--name", default="yolo11")
+    ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--reuse-ds", action="store_true", help="ds7 이미 있으면 빌드 스킵")
     args = ap.parse_args()
     out = config.EXPERIMENTS / "stage3_detection"
     ds = out / "ds7"
-    print("[정제] 7클래스 폴리곤→bbox (전 split) ...")
-    build(ds)
+    if args.reuse_ds and (ds / "data.yaml").exists():
+        print("[정제] ds7 재사용(스킵)")
+    else:
+        print("[정제] 6클래스 폴리곤→bbox (전 split) ...")
+        build(ds)
     yml = ds / "data.yaml"
     yaml.safe_dump({"path": str(ds.resolve()), "train": "images/train", "val": "images/val",
                     "test": "images/test", "names": {i: n for i, n in enumerate(NAMES)}},
                    open(yml, "w", encoding="utf-8"), allow_unicode=True)
     print(f"[학습] YOLO11 {args.epochs}ep imgsz{args.imgsz} (7클래스) ...")
     model = YOLO(args.model)
-    model.train(data=str(yml), epochs=args.epochs, imgsz=args.imgsz, batch=32,
-                project=str(out), name="yolo11_7cls", exist_ok=True, verbose=False, plots=False)
-    m = model.val(data=str(yml), split="test", project=str(out), name="yolo11_7cls_test", exist_ok=True, verbose=False)
-    print(f"\n===== YOLO11 (ELLIMAC 7클래스, test) =====")
+    model.train(data=str(yml), epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+                project=str(out), name=args.name, exist_ok=True, verbose=False, plots=False)
+    m = model.val(data=str(yml), split="test", project=str(out), name=args.name + "_test", exist_ok=True, verbose=False)
+    print(f"\n===== {args.name} (ELLIMAC 6클래스, test) =====")
     print(f"  mAP@0.5={m.box.map50:.4f}  mAP@0.5:0.95={m.box.map:.4f}  P={m.box.mp:.3f} R={m.box.mr:.3f}")
     for i, n in enumerate(NAMES):
         try:
