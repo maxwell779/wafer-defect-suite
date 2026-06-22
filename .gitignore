@@ -1,3 +1,6 @@
+# data (대용량 — git 에 올리지 않음, 로컬 data/ 에만 보관)
+data/
+
 # outputs / weights / large artifacts
 experiments/
 *.pt

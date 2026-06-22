@@ -1,16 +1,19 @@
 """Central paths & constants for wafer-defect-suite.
 
-데이터는 busbar 프로젝트 폴더에 있으므로 절대경로로 참조한다.
-(레포는 g:/wafer-defect-suite, 데이터는 g:/pro-vision/data/wafer_datasets)
+데이터는 레포 내부 data/ 에 둔다 (git 에는 올리지 않음 — .gitignore 의 data/).
+경로는 레포 위치에 무관하게 동작하도록 __file__ 기준 상대경로.
 """
 from pathlib import Path
 
-# ── 데이터 루트 (외부 참조) ───────────────────────────────────────────
-DATA_ROOT = Path("g:/pro-vision/data/wafer_datasets")
+REPO = Path(__file__).resolve().parent
+DATA = REPO / "data"
+
+# ── 데이터 ────────────────────────────────────────────────────────────
+DATA_ROOT = DATA / "wafer_datasets"
 
 # Stage 2 — 웨이퍼맵 (합성 멀티라벨 + 실제)
-MIXEDWM38_NPZ = Path("g:/pro-vision/data/Wafer_Map_Datasets.npz")   # (38015,52,52)+(38015,8)
-LSWMD_PKL     = DATA_ROOT / "LSWMD/LSWMD.pkl"                         # WM-811K 실데이터 811k
+MIXEDWM38_NPZ = DATA / "Wafer_Map_Datasets.npz"          # (38015,52,52)+(38015,8)
+LSWMD_PKL     = DATA_ROOT / "LSWMD/LSWMD.pkl"            # WM-811K 실데이터 811k
 
 # Stage 1 — 공정 센서 (테이블)
 MERUVA_CSV    = DATA_ROOT / "meruva_csv/semiconductor_wafer_defect_dataset.csv"
