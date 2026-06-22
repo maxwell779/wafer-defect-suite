@@ -54,8 +54,9 @@ def build(ds):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--epochs", type=int, default=40)
-    ap.add_argument("--imgsz", type=int, default=416)
+    ap.add_argument("--epochs", type=int, default=200)
+    ap.add_argument("--patience", type=int, default=50, help="조기종료(개선없을시)")
+    ap.add_argument("--imgsz", type=int, default=1280)
     ap.add_argument("--model", default="yolo11n.pt")
     ap.add_argument("--name", default="yolo11")
     ap.add_argument("--batch", type=int, default=16)
@@ -74,7 +75,9 @@ def main():
                    open(yml, "w", encoding="utf-8"), allow_unicode=True)
     print(f"[학습] YOLO11 {args.epochs}ep imgsz{args.imgsz} (7클래스) ...")
     model = YOLO(args.model)
+    # busbar parity 최대성능: 200ep+patience 조기종료, cos_lr, imgsz1280, 기본 강증강(mosaic 등)
     model.train(data=str(yml), epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+                patience=args.patience, cos_lr=True, optimizer="auto", iou=0.45,
                 project=str(out), name=args.name, exist_ok=True, verbose=False, plots=False)
     m = model.val(data=str(yml), split="test", project=str(out), name=args.name + "_test", exist_ok=True, verbose=False)
     print(f"\n===== {args.name} (ELLIMAC 6클래스, test) =====")
