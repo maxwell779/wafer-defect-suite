@@ -16,24 +16,30 @@ FEATS = ["temperature_c", "pressure_torr", "gas_flow_sccm", "etch_rate_nm_min", 
 SAMPLES = Path(__file__).resolve().parent / "samples.npz"
 
 
-# ── Stage 1 (sklearn, 가벼움 — 즉시 fit) ──────────────────────────────
+def _eng(X):
+    """6 raw → 11 (base + 비율·전력·교호) — Stage1 best 피처(결함=센서 조합)."""
+    t, p, g, e, v, c = X.T
+    return np.c_[X, p / (e + 1e-6), t / (p + 1e-6), e * t, v * c, g / (p + 1e-6)]
+
+
+# ── Stage 1 (sklearn — 교호작용 피처 + Mahalanobis, best) ──────────────
 class Stage1:
     def __init__(self):
         import pandas as pd
         from sklearn.preprocessing import StandardScaler
-        from sklearn.neighbors import LocalOutlierFactor
+        from sklearn.covariance import EllipticEnvelope
         df = pd.read_csv(config.MERUVA_CSV)
         X = df[FEATS].to_numpy(float); y = df["defect_label"].to_numpy(int)
         Xn = X[y == 0]
-        self.mean, self.std = Xn.mean(0), Xn.std(0)
-        self.sc = StandardScaler().fit(Xn)
-        self.lof = LocalOutlierFactor(n_neighbors=20, novelty=True).fit(self.sc.transform(Xn))
-        s = -self.lof.score_samples(self.sc.transform(X))
+        self.mean, self.std = Xn.mean(0), Xn.std(0)            # recommendations용(raw)
+        self.sc = StandardScaler().fit(_eng(Xn))               # 교호작용 피처 스케일
+        self.ee = EllipticEnvelope(contamination=0.05, random_state=config.SEED).fit(self.sc.transform(_eng(Xn)))
+        s = -self.ee.score_samples(self.sc.transform(_eng(X)))
         self.smin, self.smax = float(s.min()), float(s.max())
 
     def score(self, params: dict):
         x = np.array([[float(params[f]) for f in FEATS]])
-        s = float(-self.lof.score_samples(self.sc.transform(x))[0])
+        s = float(-self.ee.score_samples(self.sc.transform(_eng(x)))[0])
         norm = (s - self.smin) / (self.smax - self.smin + 1e-9)
         z = {f: float((x[0, i] - self.mean[i]) / (self.std[i] + 1e-9)) for i, f in enumerate(FEATS)}
         recs = []
@@ -52,14 +58,17 @@ class Stage2:
         import torch
         self.torch = torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # 실모델 = SE-ResNet(best 0.928); 없으면 CNN 폴백
-        rr = config.EXPERIMENTS / "stage2_real_asl_resnet/best.pt"
-        if rr.exists():
-            self.real = self._load(rr, "resnet", 48)
-            self.real_layer = self.real.layers[-1]
-        else:
-            self.real = self._load(config.EXPERIMENTS / "stage2_real_asl_w64aug/best.pt", "cnn", 64)
-            self.real_layer = None
+        # 실모델 = SE-ResNet 앙상블(best 0.935); 없으면 CNN 폴백
+        ens = [("stage2_real_asl_resnet", 48), ("stage2_real_asl_resnet2", 48), ("stage2_real_asl_resnet3", 48),
+               ("stage2_real_asl_r64s42", 64), ("stage2_real_asl_r64s2", 64), ("stage2_real_asl_r64s3", 64)]
+        self.real_models = []
+        for d, w in ens:
+            p = config.EXPERIMENTS / d / "best.pt"
+            if p.exists():
+                self.real_models.append(self._load(p, "resnet", w))
+        if not self.real_models:                               # 폴백
+            self.real_models = [self._load(config.EXPERIMENTS / "stage2_real_asl_w64aug/best.pt", "cnn", 64)]
+        self.real_layer = getattr(self.real_models[0], "layers", [None])[-1]  # CAM용
         self.synth = self._load(config.EXPERIMENTS / "stage2_asl_w32/best.pt", "cnn", 32)
         self.samples = np.load(SAMPLES) if SAMPLES.exists() else None
 
@@ -76,13 +85,13 @@ class Stage2:
     def predict(self, wmap):
         x = self._x(wmap)
         with self.torch.no_grad():
-            pr = self.torch.sigmoid(self.real(x))[0].cpu().numpy()
+            pr = np.mean([self.torch.sigmoid(m(x))[0].cpu().numpy() for m in self.real_models], axis=0)
             ps = self.torch.sigmoid(self.synth(x))[0].cpu().numpy()
         return {"classes": CLS, "pred_real": [round(float(v), 3) for v in pr],
                 "pred_synth": [round(float(v), 3) for v in ps]}
 
     def gradcam(self, wmap, cls_idx):
-        cam = cam_fn(self.real, self._x(wmap), int(cls_idx), self.real_layer)   # 52x52 [0,1]
+        cam = cam_fn(self.real_models[0], self._x(wmap), int(cls_idx), self.real_layer)  # 52x52 [0,1]
         return cam.round(3).tolist()
 
     def sample(self, cls_name):
