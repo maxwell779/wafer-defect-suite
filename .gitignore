@@ -1,0 +1,19 @@
+# outputs / weights / large artifacts
+experiments/
+*.pt
+*.pth
+*.ckpt
+*.npz
+*.pkl
+*.csv
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# os
+.DS_Store
+Thumbs.db
