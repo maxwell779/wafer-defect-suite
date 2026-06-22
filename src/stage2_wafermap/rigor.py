@@ -39,12 +39,13 @@ def main():
     ap.add_argument("--ckpt", default="experiments/stage2_real_asl/best.pt")
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000)
+    ap.add_argument("--seed", type=int, default=config.SEED, help="학습과 동일 split seed")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
 
-    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=config.SEED)
-    tr, va, te = lot_group_split(y_idx, lots, seed=config.SEED)
+    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=args.seed)
+    tr, va, te = lot_group_split(y_idx, lots, seed=args.seed)
     dl = lambda idx: DataLoader(WaferMapDataset(X, Y, idx), batch_size=256)
     model = WaferCNN(3, len(cls), args.width).to(device).eval()
     model.load_state_dict(torch.load(args.ckpt, map_location=device))

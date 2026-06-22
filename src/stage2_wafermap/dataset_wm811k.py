@@ -20,9 +20,20 @@ def _flat(x):
     return a[0] if a.size else "NA"
 
 
+def _to_size(m, size, pad):
+    """가변크기 맵 → size×size. pad=True면 정사각 패딩 후 리사이즈(종횡비 보존)."""
+    if pad:
+        h, w = m.shape
+        s = max(h, w)
+        sq = np.zeros((s, s), dtype=np.uint8)
+        sq[(s - h) // 2:(s - h) // 2 + h, (s - w) // 2:(s - w) // 2 + w] = m
+        m = sq
+    return cv2.resize(m, (size, size), interpolation=cv2.INTER_NEAREST)
+
+
 def load_wm811k(pkl_path=None, classes=None, include_normal=True,
-                normal_cap=10000, size=52, seed=42):
-    """returns X(N,52,52 int8 {0,1,2}), Y(N,8 multi-hot), y_idx(N,), lots(N,)."""
+                normal_cap=10000, size=52, seed=42, pad=False):
+    """returns X(N,size,size int8 {0,1,2}), Y(N,8 multi-hot), y_idx(N,), lots(N,)."""
     pkl_path = pkl_path or config.LSWMD_PKL
     classes = classes or config.WM_CLASSES
     rng = np.random.RandomState(seed)
@@ -45,7 +56,7 @@ def load_wm811k(pkl_path=None, classes=None, include_normal=True,
     X = np.zeros((len(sel_pos), size, size), dtype=np.int8)
     for k, p in enumerate(sel_pos):
         m = np.asarray(wm[p]).astype(np.uint8)
-        X[k] = cv2.resize(m, (size, size), interpolation=cv2.INTER_NEAREST)
+        X[k] = _to_size(m, size, pad)
     y_idx = np.array(sel_cls)
     lots = lotv[np.array(sel_pos)]
     Y = np.zeros((len(y_idx), len(classes)), dtype=np.float32)

@@ -5,7 +5,7 @@
   {"name": "A 증강 진단", "macro_f1": 0.311, "mAP": 0.413},
   {"name": "실데이터 lot-split", "macro_f1": 0.859, "mAP": 0.930},
   {"name": "실데이터 강화(증강+w64)", "macro_f1": 0.890, "mAP": 0.955},
-  {"name": "+임계보정(val-only)", "macro_f1": 0.900, "mAP": 0.955}
+  {"name": "+임계보정(val-only)", "macro_f1": 0.902, "mAP": 0.955}
  ],
  "per_class": [
   {"cls": "Center", "f1": 0.933, "ap": 0.989, "support": 684},

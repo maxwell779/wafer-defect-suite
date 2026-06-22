@@ -38,6 +38,9 @@ def main():
     ap.add_argument("--seed", type=int, default=config.SEED)
     ap.add_argument("--augment", action="store_true", help="회전/플립(+약노이즈) 증강")
     ap.add_argument("--aug-noise", type=float, default=0.05, help="증강 노이즈 비율(실데이터는 낮게)")
+    ap.add_argument("--size", type=int, default=52, help="입력 해상도")
+    ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
+    ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
     ap.add_argument("--tag", default="", help="출력 디렉터리 접미사")
     args = ap.parse_args()
 
@@ -51,7 +54,7 @@ def main():
     # ── data (lot-split leak-free) ────────────────────────────────────
     print("[load] WM-811K + 52x52 리사이즈 ...")
     t = time.time()
-    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=args.seed)
+    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=args.seed, size=args.size, pad=args.pad)
     tr, va, te = lot_group_split(y_idx, lots, seed=args.seed)
     if args.label_frac < 1.0:                       # 저라벨 실험 (SSL 이득 부각)
         rng = np.random.default_rng(config.SEED)
@@ -64,7 +67,16 @@ def main():
 
     mk = lambda ds, sh: DataLoader(ds, batch_size=args.batch, shuffle=sh,
                                    num_workers=args.workers, pin_memory=(device == "cuda"))
-    tr_dl = mk(WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.seed, aug_noise=args.aug_noise), True)
+    tr_ds = WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.seed, aug_noise=args.aug_noise)
+    if args.balanced:                                   # 희귀클래스 균형 샘플링
+        import collections
+        yt = y_idx[tr]; cnt = collections.Counter(yt.tolist())
+        w = torch.as_tensor([1.0 / cnt[int(c)] for c in yt], dtype=torch.double)
+        sampler = torch.utils.data.WeightedRandomSampler(w, num_samples=len(tr), replacement=True)
+        tr_dl = DataLoader(tr_ds, batch_size=args.batch, sampler=sampler,
+                           num_workers=args.workers, pin_memory=(device == "cuda"))
+    else:
+        tr_dl = mk(tr_ds, True)
     va_dl = mk(WaferMapDataset(X, Y, va), False)
     te_dl = mk(WaferMapDataset(X, Y, te), False)
 
