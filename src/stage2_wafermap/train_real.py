@@ -29,7 +29,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--batch", type=int, default=256)
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--loss", choices=["bce", "asl"], default="asl")
+    ap.add_argument("--loss", choices=["bce", "asl", "focal"], default="asl")
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000, help="정상('none') 표본 상한(0=전체)")
     ap.add_argument("--workers", type=int, default=0)
@@ -85,10 +85,15 @@ def main():
 
     # ── model/loss/optim ──────────────────────────────────────────────
     model = build_model(args.arch, in_ch=3, n_classes=len(cls), width=args.width).to(device)
-    if args.init:                                   # SSL 사전학습 encoder 로드
-        model.features.load_state_dict(torch.load(args.init, map_location=device))
-        print(f"  [init] SSL encoder 로드: {args.init}")
-    pw = pos_weight_from(Y, tr).to(device) if args.loss == "bce" else None
+    if args.init:                                   # 사전학습 가중치 로드(전체 or features)
+        sd = torch.load(args.init, map_location=device)
+        try:
+            model.features.load_state_dict(sd)      # WaferCNN SSL encoder 형식
+            print(f"  [init] features 로드: {args.init}")
+        except Exception:
+            r = model.load_state_dict(sd, strict=False)  # 전체 가중치(합성→실 파인튜닝)
+            print(f"  [init] 전체 가중치 로드: {args.init} (missing {len(r.missing_keys)})")
+    pw = pos_weight_from(Y, tr).to(device) if args.loss in ("bce", "focal") else None
     criterion = build_loss(args.loss, pos_weight=pw)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)

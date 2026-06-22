@@ -19,7 +19,7 @@ from src.common.metrics import multilabel_report, format_report
 from src.stage2_wafermap.dataset import (
     load_mixedwm38, make_splits, WaferMapDataset, pos_weight_from,
 )
-from src.stage2_wafermap.model import WaferCNN
+from src.stage2_wafermap.model import build_model
 from src.stage2_wafermap.losses import build_loss
 
 
@@ -40,6 +40,7 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--loss", choices=["bce", "asl"], default="bce")
     ap.add_argument("--width", type=int, default=32)
+    ap.add_argument("--arch", choices=["cnn","resnet","resnet_cbam"], default="cnn")
     ap.add_argument("--subset", type=int, default=0, help=">0 이면 빠른 스모크용 일부만")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--augment", action="store_true", help="실제모사 증강(노이즈+회전) — A 진단실험")
@@ -48,7 +49,7 @@ def main():
     set_seed(config.SEED)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
-    out = config.EXPERIMENTS / f"stage2_{args.loss}_w{args.width}{'_aug' if args.augment else ''}"
+    out = config.EXPERIMENTS / f"stage2_{args.arch}_{args.loss}_w{args.width}{'_aug' if args.augment else ''}"
     out.mkdir(parents=True, exist_ok=True)
 
     # ── data ──────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ def main():
     te_dl = dl(WaferMapDataset(X, Y, te), False)
 
     # ── model / loss / optim ──────────────────────────────────────────
-    model = WaferCNN(in_ch=3, n_classes=len(cls), width=args.width).to(device)
+    model = build_model(args.arch, in_ch=3, n_classes=len(cls), width=args.width).to(device)
     pw = pos_weight_from(Y, tr).to(device) if args.loss == "bce" else None
     criterion = build_loss(args.loss, pos_weight=pw)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)

@@ -53,6 +53,8 @@ def score_models(Xtr, Xev, seed):
     M["OCSVM"] = -OneClassSVM(nu=0.05, gamma="scale").fit(Xtr).score_samples(Xev)
     M["LOF"] = -LocalOutlierFactor(n_neighbors=20, novelty=True).fit(Xtr).score_samples(Xev)
     M["Mahalanobis"] = -EllipticEnvelope(contamination=0.05, random_state=seed).fit(Xtr).score_samples(Xev)
+    from sklearn.covariance import LedoitWolf      # shrinkage: 고차원 공분산 안정화
+    M["Maha-LW(shrink)"] = LedoitWolf().fit(Xtr).mahalanobis(Xev)
     M["GMM"] = -GaussianMixture(3, random_state=seed).fit(Xtr).score_samples(Xev)
     M["KDE"] = -KernelDensity(bandwidth=1.0).fit(Xtr).score_samples(Xev)
     nn = NearestNeighbors(n_neighbors=5).fit(Xtr)
