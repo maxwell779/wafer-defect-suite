@@ -1,0 +1,540 @@
+[
+ {
+  "id": "synth_00",
+  "source": "synthetic",
+  "file": "assets/wm_synth_00.png",
+  "classes": [
+   "Center"
+  ],
+  "pred_real": [
+   0.9,
+   0.09,
+   0.09,
+   0.06,
+   0.07,
+   0.03,
+   0.08,
+   0.08
+  ],
+  "pred_synth": [
+   0.9,
+   0.09,
+   0.09,
+   0.06,
+   0.07,
+   0.03,
+   0.08,
+   0.08
+  ]
+ },
+ {
+  "id": "synth_01",
+  "source": "synthetic",
+  "file": "assets/wm_synth_01.png",
+  "classes": [
+   "Donut"
+  ],
+  "pred_real": [
+   0.1,
+   0.93,
+   0.06,
+   0.08,
+   0.07,
+   0.02,
+   0.06,
+   0.05
+  ],
+  "pred_synth": [
+   0.1,
+   0.93,
+   0.06,
+   0.08,
+   0.07,
+   0.02,
+   0.06,
+   0.05
+  ]
+ },
+ {
+  "id": "synth_02",
+  "source": "synthetic",
+  "file": "assets/wm_synth_02.png",
+  "classes": [
+   "Edge-Loc"
+  ],
+  "pred_real": [
+   0.08,
+   0.09,
+   0.91,
+   0.0,
+   0.01,
+   0.02,
+   0.03,
+   0.04
+  ],
+  "pred_synth": [
+   0.08,
+   0.09,
+   0.91,
+   0.0,
+   0.01,
+   0.02,
+   0.03,
+   0.04
+  ]
+ },
+ {
+  "id": "synth_03",
+  "source": "synthetic",
+  "file": "assets/wm_synth_03.png",
+  "classes": [
+   "Edge-Ring"
+  ],
+  "pred_real": [
+   0.08,
+   0.02,
+   0.02,
+   0.91,
+   0.02,
+   0.01,
+   0.04,
+   0.04
+  ],
+  "pred_synth": [
+   0.08,
+   0.02,
+   0.02,
+   0.91,
+   0.02,
+   0.01,
+   0.04,
+   0.04
+  ]
+ },
+ {
+  "id": "synth_04",
+  "source": "synthetic",
+  "file": "assets/wm_synth_04.png",
+  "classes": [
+   "Loc"
+  ],
+  "pred_real": [
+   0.01,
+   0.05,
+   0.02,
+   0.09,
+   0.88,
+   0.09,
+   0.02,
+   0.02
+  ],
+  "pred_synth": [
+   0.01,
+   0.05,
+   0.02,
+   0.09,
+   0.88,
+   0.09,
+   0.02,
+   0.02
+  ]
+ },
+ {
+  "id": "synth_05",
+  "source": "synthetic",
+  "file": "assets/wm_synth_05.png",
+  "classes": [
+   "Near-full"
+  ],
+  "pred_real": [
+   0.03,
+   0.01,
+   0.04,
+   0.04,
+   0.02,
+   0.93,
+   0.03,
+   0.02
+  ],
+  "pred_synth": [
+   0.03,
+   0.01,
+   0.04,
+   0.04,
+   0.02,
+   0.93,
+   0.03,
+   0.02
+  ]
+ },
+ {
+  "id": "synth_06",
+  "source": "synthetic",
+  "file": "assets/wm_synth_06.png",
+  "classes": [
+   "Scratch"
+  ],
+  "pred_real": [
+   0.01,
+   0.07,
+   0.0,
+   0.05,
+   0.06,
+   0.04,
+   0.86,
+   0.06
+  ],
+  "pred_synth": [
+   0.01,
+   0.07,
+   0.0,
+   0.05,
+   0.06,
+   0.04,
+   0.86,
+   0.06
+  ]
+ },
+ {
+  "id": "synth_07",
+  "source": "synthetic",
+  "file": "assets/wm_synth_07.png",
+  "classes": [
+   "Random"
+  ],
+  "pred_real": [
+   0.08,
+   0.08,
+   0.08,
+   0.02,
+   0.09,
+   0.03,
+   0.02,
+   0.93
+  ],
+  "pred_synth": [
+   0.08,
+   0.08,
+   0.08,
+   0.02,
+   0.09,
+   0.03,
+   0.02,
+   0.93
+  ]
+ },
+ {
+  "id": "synth_08",
+  "source": "synthetic",
+  "file": "assets/wm_synth_08.png",
+  "classes": [
+   "Center",
+   "Edge-Loc",
+   "Scratch"
+  ],
+  "pred_real": [
+   0.92,
+   0.08,
+   0.93,
+   0.02,
+   0.07,
+   0.02,
+   0.87,
+   0.03
+  ],
+  "pred_synth": [
+   0.92,
+   0.08,
+   0.93,
+   0.02,
+   0.07,
+   0.02,
+   0.87,
+   0.03
+  ]
+ },
+ {
+  "id": "synth_09",
+  "source": "synthetic",
+  "file": "assets/wm_synth_09.png",
+  "classes": [
+   "Center",
+   "Edge-Loc",
+   "Scratch"
+  ],
+  "pred_real": [
+   0.91,
+   0.06,
+   0.89,
+   0.04,
+   0.0,
+   0.02,
+   0.88,
+   0.01
+  ],
+  "pred_synth": [
+   0.91,
+   0.06,
+   0.89,
+   0.04,
+   0.0,
+   0.02,
+   0.88,
+   0.01
+  ]
+ },
+ {
+  "id": "synth_10",
+  "source": "synthetic",
+  "file": "assets/wm_synth_10.png",
+  "classes": [
+   "Center",
+   "Edge-Loc",
+   "Scratch"
+  ],
+  "pred_real": [
+   0.85,
+   0.09,
+   0.91,
+   0.01,
+   0.07,
+   0.05,
+   0.88,
+   0.06
+  ],
+  "pred_synth": [
+   0.85,
+   0.09,
+   0.91,
+   0.01,
+   0.07,
+   0.05,
+   0.88,
+   0.06
+  ]
+ },
+ {
+  "id": "real_Center",
+  "source": "real",
+  "file": "assets/wm_real_00_Center.png",
+  "classes": [
+   "Center"
+  ],
+  "pred_real": [
+   0.92,
+   0.04,
+   0.08,
+   0.08,
+   0.1,
+   0.04,
+   0.01,
+   0.1
+  ],
+  "pred_synth": [
+   0.07,
+   0.01,
+   0.0,
+   0.09,
+   0.09,
+   0.08,
+   0.1,
+   0.83
+  ]
+ },
+ {
+  "id": "real_Donut",
+  "source": "real",
+  "file": "assets/wm_real_01_Donut.png",
+  "classes": [
+   "Donut"
+  ],
+  "pred_real": [
+   0.04,
+   0.92,
+   0.06,
+   0.01,
+   0.01,
+   0.1,
+   0.03,
+   0.06
+  ],
+  "pred_synth": [
+   0.05,
+   0.07,
+   0.09,
+   0.04,
+   0.07,
+   0.04,
+   0.0,
+   0.64
+  ]
+ },
+ {
+  "id": "real_Edge-Loc",
+  "source": "real",
+  "file": "assets/wm_real_02_Edge-Loc.png",
+  "classes": [
+   "Edge-Loc"
+  ],
+  "pred_real": [
+   0.09,
+   0.06,
+   0.93,
+   0.01,
+   0.08,
+   0.08,
+   0.01,
+   0.02
+  ],
+  "pred_synth": [
+   0.03,
+   0.09,
+   0.08,
+   0.06,
+   0.08,
+   0.09,
+   0.1,
+   0.87
+  ]
+ },
+ {
+  "id": "real_Edge-Ring",
+  "source": "real",
+  "file": "assets/wm_real_03_Edge-Ring.png",
+  "classes": [
+   "Edge-Ring"
+  ],
+  "pred_real": [
+   0.0,
+   0.09,
+   0.04,
+   0.94,
+   0.04,
+   0.03,
+   0.06,
+   0.04
+  ],
+  "pred_synth": [
+   0.07,
+   0.01,
+   0.08,
+   0.06,
+   0.07,
+   0.08,
+   0.0,
+   0.89
+  ]
+ },
+ {
+  "id": "real_Loc",
+  "source": "real",
+  "file": "assets/wm_real_04_Loc.png",
+  "classes": [
+   "Loc"
+  ],
+  "pred_real": [
+   0.02,
+   0.06,
+   0.06,
+   0.04,
+   0.87,
+   0.0,
+   0.02,
+   0.04
+  ],
+  "pred_synth": [
+   0.07,
+   0.03,
+   0.05,
+   0.05,
+   0.02,
+   0.08,
+   0.0,
+   0.8
+  ]
+ },
+ {
+  "id": "real_Near-full",
+  "source": "real",
+  "file": "assets/wm_real_05_Near-full.png",
+  "classes": [
+   "Near-full"
+  ],
+  "pred_real": [
+   0.03,
+   0.02,
+   0.03,
+   0.05,
+   0.06,
+   0.91,
+   0.09,
+   0.01
+  ],
+  "pred_synth": [
+   0.08,
+   0.04,
+   0.1,
+   0.02,
+   0.02,
+   0.05,
+   0.06,
+   0.83
+  ]
+ },
+ {
+  "id": "real_Scratch",
+  "source": "real",
+  "file": "assets/wm_real_06_Scratch.png",
+  "classes": [
+   "Scratch"
+  ],
+  "pred_real": [
+   0.02,
+   0.1,
+   0.09,
+   0.01,
+   0.09,
+   0.01,
+   0.88,
+   0.04
+  ],
+  "pred_synth": [
+   0.02,
+   0.03,
+   0.0,
+   0.06,
+   0.07,
+   0.04,
+   0.01,
+   0.68
+  ]
+ },
+ {
+  "id": "real_Random",
+  "source": "real",
+  "file": "assets/wm_real_07_Random.png",
+  "classes": [
+   "Random"
+  ],
+  "pred_real": [
+   0.02,
+   0.07,
+   0.09,
+   0.1,
+   0.01,
+   0.1,
+   0.08,
+   0.87
+  ],
+  "pred_synth": [
+   0.03,
+   0.08,
+   0.01,
+   0.04,
+   0.0,
+   0.07,
+   0.07,
+   0.82
+  ]
+ }
+]

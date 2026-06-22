@@ -1,0 +1,49 @@
+{
+  "comparison": [
+    {
+      "model": "IsolationForest",
+      "pr_auc": 0.0546,
+      "roc_auc": 0.9022,
+      "recall_at_50": 0.286,
+      "recall_at_100": 0.714
+    },
+    {
+      "model": "OneClassSVM",
+      "pr_auc": 0.2663,
+      "roc_auc": 0.9587,
+      "recall_at_50": 0.714,
+      "recall_at_100": 0.857
+    },
+    {
+      "model": "LOF",
+      "pr_auc": 0.3412,
+      "roc_auc": 0.9774,
+      "recall_at_50": 0.857,
+      "recall_at_100": 1.0
+    },
+    {
+      "model": "Mahalanobis",
+      "pr_auc": 0.2739,
+      "roc_auc": 0.9557,
+      "recall_at_50": 0.714,
+      "recall_at_100": 0.714
+    },
+    {
+      "model": "AutoEncoder(DL)",
+      "pr_auc": 0.2107,
+      "roc_auc": 0.9302,
+      "recall_at_50": 0.571,
+      "recall_at_100": 0.857
+    }
+  ],
+  "feature_contrib": {
+    "temperature_c": 1.37,
+    "pressure_torr": -2.306,
+    "gas_flow_sccm": -0.302,
+    "etch_rate_nm_min": 1.385,
+    "voltage_v": 0.435,
+    "current_ma": 0.251
+  },
+  "n_eval": 1006,
+  "n_defect": 7
+}

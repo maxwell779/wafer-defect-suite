@@ -1,0 +1,38 @@
+import React, { useState } from "react";
+import Dashboard from "./pages/Dashboard.jsx";
+import Stage1Process from "./pages/Stage1Process.jsx";
+import Stage2WaferMap from "./pages/Stage2WaferMap.jsx";
+import Stage3Detection from "./pages/Stage3Detection.jsx";
+import Experiments from "./pages/Experiments.jsx";
+
+const TABS = [
+  ["dashboard", "Dashboard"],
+  ["stage1", "Stage 1 · 공정 모니터"],
+  ["stage2", "Stage 2 · 웨이퍼맵"],
+  ["stage3", "Stage 3 · 결함 검출/위치"],
+  ["experiments", "Experiments"],
+];
+
+export default function App() {
+  const [tab, setTab] = useState("dashboard");
+  return (
+    <div className="app">
+      <div className="topbar">
+        <div className="brand"><span className="dot" /> Wafer Defect Console</div>
+        <div className="tabs">
+          {TABS.map(([id, label]) => (
+            <button key={id} className={"tab" + (tab === id ? " active" : "")} onClick={() => setTab(id)}>{label}</button>
+          ))}
+        </div>
+        <span className="demo">DEMO</span>
+      </div>
+      <div className="wrap">
+        {tab === "dashboard" && <Dashboard go={setTab} />}
+        {tab === "stage1" && <Stage1Process />}
+        {tab === "stage2" && <Stage2WaferMap />}
+        {tab === "stage3" && <Stage3Detection />}
+        {tab === "experiments" && <Experiments />}
+      </div>
+    </div>
+  );
+}
