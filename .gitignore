@@ -1,6 +1,10 @@
 # data (대용량 — git 에 올리지 않음, 로컬 data/ 에만 보관)
 data/
 
+# 웹 패키지 생성물 (zip 배포용, git 제외)
+_webpkg/
+*.zip
+
 # outputs / weights / large artifacts
 experiments/
 *.pt
