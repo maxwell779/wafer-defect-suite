@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config
-from src.stage2_wafermap.model import WaferCNN
+from src.stage2_wafermap.model import build_model
 from src.stage3_localization.gradcam import gradcam as cam_fn
 
 CLS = config.WM_CLASSES
@@ -52,17 +52,19 @@ class Stage2:
         import torch
         self.torch = torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # 실모델 = 강화판(width64, 증강); 없으면 baseline(width32) 폴백
-        rw = config.EXPERIMENTS / "stage2_real_asl_w64aug/best.pt"
-        if rw.exists():
-            self.real = self._load(rw, 64)
+        # 실모델 = SE-ResNet(best 0.928); 없으면 CNN 폴백
+        rr = config.EXPERIMENTS / "stage2_real_asl_resnet/best.pt"
+        if rr.exists():
+            self.real = self._load(rr, "resnet", 48)
+            self.real_layer = self.real.layers[-1]
         else:
-            self.real = self._load(config.EXPERIMENTS / "stage2_real_asl/best.pt", 32)
-        self.synth = self._load(config.EXPERIMENTS / "stage2_asl_w32/best.pt", 32)
+            self.real = self._load(config.EXPERIMENTS / "stage2_real_asl_w64aug/best.pt", "cnn", 64)
+            self.real_layer = None
+        self.synth = self._load(config.EXPERIMENTS / "stage2_asl_w32/best.pt", "cnn", 32)
         self.samples = np.load(SAMPLES) if SAMPLES.exists() else None
 
-    def _load(self, p, width):
-        m = WaferCNN(3, len(CLS), width).to(self.device).eval()
+    def _load(self, p, arch, width):
+        m = build_model(arch, 3, len(CLS), width).to(self.device).eval()
         m.load_state_dict(self.torch.load(p, map_location=self.device))
         return m
 
@@ -80,7 +82,7 @@ class Stage2:
                 "pred_synth": [round(float(v), 3) for v in ps]}
 
     def gradcam(self, wmap, cls_idx):
-        cam = cam_fn(self.real, self._x(wmap), int(cls_idx))   # 52x52 [0,1]
+        cam = cam_fn(self.real, self._x(wmap), int(cls_idx), self.real_layer)   # 52x52 [0,1]
         return cam.round(3).tolist()
 
     def sample(self, cls_name):

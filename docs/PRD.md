@@ -48,9 +48,10 @@
 | A 증강 진단 | 0.311 | "노이즈 원인설" 기각(negative) |
 | 실데이터 lot-split(baseline) | 0.859 | 단일 |
 | C 자기지도(SimCLR) | 0.869 / 저라벨 −0.02 | **효과 없음(negative)** |
-| **실데이터 강화(증강+width64+45ep)** | **0.890 ± 0.007** (3-seed) | ★ |
-| **+ per-class 임계보정(val-only)** | **0.902 ± 0.008** (3-seed 실측) | ★ 최종, Loc 0.72→0.81 |
-| (negative) 종횡비패딩·해상도↑·balanced샘플링 | 0.85~0.87 | 모두 효과 없음 |
+| CNN 강화(증강+width64)+보정 | 0.902 ± 0.008 (3-seed) | |
+| **SE-ResNet(깊이+SE attention)** | 0.912 → 보정 **0.928** | ★★ 돌파 |
+| **SE-ResNet 앙상블(3)+보정** | **0.929** | ★ best (Loc 0.85·Scratch 0.86·NF 1.0) |
+| (negative) 패딩·해상도·balanced·SimCLR·MAE·DINO | 0.85~0.87 / 0.33 | 모두 효과 없음(정직) |
 - 평가: lot 그룹 분할·다중 seed·임계 val-only. 혼동행렬 산출 완료.
 
 ### Stage 3 — 결함 위치 ✅ (A+B)

@@ -2,20 +2,20 @@
  "comparison": [
   {"name": "합성 학습", "macro_f1": 0.985, "mAP": 0.999},
   {"name": "합성→실제 전이", "macro_f1": 0.364, "mAP": 0.417},
-  {"name": "A 증강 진단", "macro_f1": 0.311, "mAP": 0.413},
-  {"name": "실데이터 lot-split", "macro_f1": 0.859, "mAP": 0.930},
-  {"name": "실데이터 강화(증강+w64)", "macro_f1": 0.890, "mAP": 0.955},
-  {"name": "+임계보정(val-only)", "macro_f1": 0.902, "mAP": 0.955}
+  {"name": "실데이터 CNN lot-split", "macro_f1": 0.859, "mAP": 0.930},
+  {"name": "CNN 강화+보정", "macro_f1": 0.902, "mAP": 0.955},
+  {"name": "SE-ResNet", "macro_f1": 0.912, "mAP": 0.974},
+  {"name": "SE-ResNet 앙상블+보정", "macro_f1": 0.929, "mAP": 0.974}
  ],
  "per_class": [
-  {"cls": "Center", "f1": 0.933, "ap": 0.989, "support": 684},
-  {"cls": "Donut", "f1": 0.927, "ap": 0.979, "support": 134},
-  {"cls": "Edge-Loc", "f1": 0.877, "ap": 0.945, "support": 714},
-  {"cls": "Edge-Ring", "f1": 0.986, "ap": 0.999, "support": 1348},
-  {"cls": "Loc", "f1": 0.809, "ap": 0.86, "support": 497},
-  {"cls": "Near-full", "f1": 0.833, "ap": 0.965, "support": 10},
-  {"cls": "Scratch", "f1": 0.800, "ap": 0.88, "support": 178},
-  {"cls": "Random", "f1": 0.895, "ap": 0.95, "support": 92}
+  {"cls": "Center", "f1": 0.971, "ap": 0.995, "support": 684},
+  {"cls": "Donut", "f1": 0.928, "ap": 0.985, "support": 134},
+  {"cls": "Edge-Loc", "f1": 0.928, "ap": 0.97, "support": 714},
+  {"cls": "Edge-Ring", "f1": 0.996, "ap": 0.999, "support": 1348},
+  {"cls": "Loc", "f1": 0.846, "ap": 0.9, "support": 497},
+  {"cls": "Near-full", "f1": 1.0, "ap": 1.0, "support": 10},
+  {"cls": "Scratch", "f1": 0.855, "ap": 0.92, "support": 178},
+  {"cls": "Random", "f1": 0.915, "ap": 0.96, "support": 92}
  ],
  "confusion_synth_on_real": {
   "labels": ["Center", "Donut", "Edge-Loc", "Edge-Ring", "Loc", "Near-full", "Scratch", "Random"],
