@@ -41,7 +41,7 @@ def main():
     ap.add_argument("--size", type=int, default=52, help="입력 해상도")
     ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
     ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
-    ap.add_argument("--arch", choices=["cnn", "resnet", "resnet_cbam"], default="cnn")
+    ap.add_argument("--arch", choices=["cnn","resnet","resnet_cbam","tvresnet18","tvresnet34"], default="cnn")
     ap.add_argument("--inmode", choices=["onehot", "coord", "radial", "coord_radial"], default="onehot",
                     help="입력채널: coord/radial=위치 모호성 표적")
     ap.add_argument("--denoise", action="store_true", help="전처리: 고립 불량다이 제거")

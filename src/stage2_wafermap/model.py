@@ -94,9 +94,23 @@ class WaferResNet(nn.Module):
         return self.head(self.layers(self.stem(x)))
 
 
+def _tv_resnet(in_ch, n_classes, depth=18):
+    """torchvision ResNet(이질 패밀리) — 52x52 소입력용으로 stem 수정."""
+    import torchvision.models as tvm
+    net = {18: tvm.resnet18, 34: tvm.resnet34}[depth](weights=None)
+    net.conv1 = nn.Conv2d(in_ch, 64, 3, 1, 1, bias=False)   # 7x7s2 → 3x3s1(소입력)
+    net.maxpool = nn.Identity()                              # 해상도 보존
+    net.fc = nn.Linear(net.fc.in_features, n_classes)
+    return net
+
+
 def build_model(arch, in_ch=3, n_classes=8, width=32):
     if arch == "resnet":
         return WaferResNet(in_ch, n_classes, width, attn="se")
     if arch == "resnet_cbam":
         return WaferResNet(in_ch, n_classes, width, attn="cbam")
+    if arch == "tvresnet18":
+        return _tv_resnet(in_ch, n_classes, 18)
+    if arch == "tvresnet34":
+        return _tv_resnet(in_ch, n_classes, 34)
     return WaferCNN(in_ch, n_classes, width)
