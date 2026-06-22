@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, HBars, ControlChart, Scatter, STATUS_BADGE } from "../ui.jsx";
+import { stage1Score } from "../api.js";
 import runs from "../appdata/process_runs.json";
 import s1 from "../appdata/stage1_results.json";
 
@@ -9,7 +10,7 @@ const FEATS = [
   ["voltage_v", "전압", "V"], ["current_ma", "전류", "mA"],
 ];
 
-export default function Stage1Process() {
+export default function Stage1Process({ live }) {
   const normal = runs.filter((r) => r.defect === 0);
   const stats = useMemo(() => {
     const s = {};
@@ -45,6 +46,15 @@ export default function Stage1Process() {
   const liveScore = sliders
     ? FEATS.reduce((a, [k]) => a + ((sliders[k] - stats[k].m) / stats[k].sd) ** 2, 0) / maxScore
     : 0;
+
+  // LIVE: 슬라이더 변경 → 백엔드 LOF 실시간 채점 (디바운스, 폴백=휴리스틱)
+  const [api, setApi] = useState(null);
+  useEffect(() => {
+    if (!live || !sliders) { setApi(null); return; }
+    const t = setTimeout(() => stage1Score(sliders).then(setApi).catch(() => setApi(null)), 250);
+    return () => clearTimeout(t);
+  }, [live, sliders]);
+  const effScore = live && api ? api.anomaly_score : liveScore;
 
   return (
     <div className="grid">
@@ -84,9 +94,11 @@ export default function Stage1Process() {
           {sel && sliders && (
             <div>
               <div className="bar-track" style={{ height: 20, marginBottom: 4 }}>
-                <div className="bar-fill" style={{ width: Math.min(liveScore * 100, 100) + "%", background: liveScore > 0.5 ? "var(--red)" : "var(--amber)" }} />
+                <div className="bar-fill" style={{ width: Math.min(effScore * 100, 100) + "%", background: effScore > 0.5 ? "var(--red)" : "var(--amber)" }} />
               </div>
-              <div style={{ textAlign: "right", marginBottom: 10 }} className="mono">재계산 이상점수 {liveScore.toFixed(3)}</div>
+              <div style={{ textAlign: "right", marginBottom: 10 }} className="mono">
+                {live && api ? "실시간 LOF 점수" : "재계산 이상점수(휴리스틱)"} {effScore.toFixed(3)}
+              </div>
               {FEATS.map(([k, label, unit]) => {
                 const z = (sliders[k] - stats[k].m) / stats[k].sd;
                 const mn = stats[k].m, lo = mn - 4 * stats[k].sd, hi = mn + 4 * stats[k].sd;

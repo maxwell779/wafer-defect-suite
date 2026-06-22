@@ -59,6 +59,13 @@ Dashboard · Stage1(테이블·관리도·파라미터 추천·ML vs DL) · Stag
 ```bash
 cd web && npm install && npm run dev   # http://localhost:5173
 ```
+**LIVE 추론(선택)** — FastAPI 백엔드 연결 시 실제 모델 추론:
+```bash
+python -m backend.prep_samples            # 최초 1회
+uvicorn backend.main:app --port 8000      # 백엔드
+```
+웹이 백엔드를 감지하면 상단 배지가 **LIVE**로 바뀌고, Stage1 슬라이더→실시간 LOF 점수,
+Stage2 "⚡LIVE 추론"→실제 WaferCNN 예측(실모델 vs 합성모델 전이 실패를 실시간으로). 백엔드 없으면 정적 데모로 폴백.
 
 ## 구조
 ```

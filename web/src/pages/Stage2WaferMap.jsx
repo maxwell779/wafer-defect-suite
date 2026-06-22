@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, HBars, WM_CLASSES } from "../ui.jsx";
+import { stage2Sample } from "../api.js";
 import wmaps from "../appdata/wafermaps.json";
 
 const url = (f) => "/" + f; // public/assets
 
-export default function Stage2WaferMap() {
+export default function Stage2WaferMap({ live }) {
   const [src, setSrc] = useState("ALL");
   const [cls, setCls] = useState("ALL");
   const [selId, setSelId] = useState(wmaps.find((m) => m.source === "real")?.id || wmaps[0].id);
@@ -12,10 +13,13 @@ export default function Stage2WaferMap() {
   const [thr, setThr] = useState(0.5);
   const [heat, setHeat] = useState(false);
   const [cmp, setCmp] = useState(false);
+  const [liveRes, setLiveRes] = useState(null);
 
   const gallery = wmaps.filter((m) => (src === "ALL" || m.source === src) && (cls === "ALL" || m.classes.includes(cls)));
   const sel = wmaps.find((m) => m.id === selId);
-  const pred = model === "real" ? sel.pred_real : sel.pred_synth;
+  useEffect(() => { setLiveRes(null); }, [selId]);   // 맵 바뀌면 라이브 결과 초기화
+  const staticPred = model === "real" ? sel.pred_real : sel.pred_synth;
+  const pred = liveRes ? (model === "real" ? liveRes.pred_real : liveRes.pred_synth) : staticPred;
   const predRows = WM_CLASSES.map((c, i) => ({ label: c, value: pred[i] }));
   const ng = Math.max(...pred) >= thr;
   const hits = WM_CLASSES.filter((_, i) => pred[i] >= thr);
@@ -60,10 +64,13 @@ export default function Stage2WaferMap() {
 
         {/* 판정 */}
         <Card title="결함 판정" sub={`${model === "real" ? "실데이터" : "합성"} 모델 · 임계값 ${thr.toFixed(2)}`}>
-          <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
             <button className={"btn" + (model === "real" ? " on" : "")} onClick={() => setModel("real")}>실데이터 모델</button>
             <button className={"btn" + (model === "synth" ? " on" : "")} onClick={() => setModel("synth")}>합성 모델</button>
+            {live && <button className="btn" style={{ borderColor: "var(--green)", color: "var(--green)" }}
+              onClick={() => stage2Sample(sel.classes[0]).then(setLiveRes).catch(() => {})}>⚡ LIVE 추론(실모델)</button>}
           </div>
+          {liveRes && <div className="note" style={{ marginBottom: 10, fontSize: 12 }}>실시간 추론 결과 — 클래스 {liveRes.true_class} 실제 샘플 (백엔드 WaferCNN)</div>}
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: ng ? "var(--red)" : "var(--green)" }}>
             판정 {ng ? "NG" : "OK"} {hits.map((h) => <span key={h} className="badge b-fail" style={{ marginLeft: 6, fontSize: 11 }}>{h}</span>)}
           </div>
