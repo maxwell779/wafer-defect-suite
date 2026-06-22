@@ -33,12 +33,15 @@ def main():
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000, help="정상('none') 표본 상한(0=전체)")
     ap.add_argument("--workers", type=int, default=0)
+    ap.add_argument("--init", default="", help="SSL 사전학습 encoder.pt 경로(features 초기화)")
+    ap.add_argument("--label-frac", type=float, default=1.0, help="train 라벨 사용 비율(저라벨 실험)")
     args = ap.parse_args()
 
     set_seed(config.SEED)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
-    out = config.EXPERIMENTS / f"stage2_real_{args.loss}"
+    tag = ("_ssl" if args.init else "") + (f"_f{args.label_frac:g}" if args.label_frac < 1.0 else "")
+    out = config.EXPERIMENTS / f"stage2_real_{args.loss}{tag}"
     out.mkdir(parents=True, exist_ok=True)
 
     # ── data (lot-split leak-free) ────────────────────────────────────
@@ -46,6 +49,9 @@ def main():
     t = time.time()
     X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=config.SEED)
     tr, va, te = lot_group_split(y_idx, lots, seed=config.SEED)
+    if args.label_frac < 1.0:                       # 저라벨 실험 (SSL 이득 부각)
+        rng = np.random.default_rng(config.SEED)
+        tr = rng.choice(tr, int(len(tr) * args.label_frac), replace=False)
     print(f"  maps {len(X)} | train {len(tr)} val {len(va)} test {len(te)} "
           f"| lots {len(set(lots))} | ({time.time()-t:.0f}s)  [lot-leak 검증 통과]")
     print(f"  class 분포(train): " + ", ".join(
@@ -59,6 +65,9 @@ def main():
 
     # ── model/loss/optim ──────────────────────────────────────────────
     model = WaferCNN(in_ch=3, n_classes=len(cls), width=args.width).to(device)
+    if args.init:                                   # SSL 사전학습 encoder 로드
+        model.features.load_state_dict(torch.load(args.init, map_location=device))
+        print(f"  [init] SSL encoder 로드: {args.init}")
     pw = pos_weight_from(Y, tr).to(device) if args.loss == "bce" else None
     criterion = build_loss(args.loss, pos_weight=pw)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)

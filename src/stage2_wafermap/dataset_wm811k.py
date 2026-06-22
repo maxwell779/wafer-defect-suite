@@ -56,6 +56,26 @@ def load_wm811k(pkl_path=None, classes=None, include_normal=True,
     return X, Y, y_idx, lots
 
 
+def load_wm811k_unlabeled(pkl_path=None, cap=150000, size=52, seed=42):
+    """미라벨(failureType=='NA') 맵 추출 → SSL 사전학습용. returns X(N,52,52 int8)."""
+    pkl_path = pkl_path or config.LSWMD_PKL
+    df = pd.read_pickle(pkl_path)
+    ftv = df["failureType"].map(_flat).to_numpy()
+    wm = df["waferMap"].to_numpy()
+    pos = np.where(ftv == "NA")[0]
+    rng = np.random.RandomState(seed)
+    if cap and len(pos) > cap:
+        pos = rng.choice(pos, cap, replace=False)
+    X = np.zeros((len(pos), size, size), dtype=np.int8)
+    for k, p in enumerate(pos):
+        m = np.asarray(wm[p]).astype(np.uint8)
+        if m.ndim != 2 or m.size == 0:
+            continue
+        X[k] = cv2.resize(m, (size, size), interpolation=cv2.INTER_NEAREST)
+    del df, wm
+    return X
+
+
 def lot_group_split(y_idx, lots, seed=42, n_splits=7):
     """lot 그룹 + 클래스 stratify. returns (train_idx, val_idx, test_idx).
     test≈1/7, val≈1/7, train≈5/7. 같은 lot은 한 split에만."""
