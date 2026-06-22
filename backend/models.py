@@ -52,12 +52,17 @@ class Stage2:
         import torch
         self.torch = torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.real = self._load(config.EXPERIMENTS / "stage2_real_asl/best.pt")
-        self.synth = self._load(config.EXPERIMENTS / "stage2_asl_w32/best.pt")
+        # 실모델 = 강화판(width64, 증강); 없으면 baseline(width32) 폴백
+        rw = config.EXPERIMENTS / "stage2_real_asl_w64aug/best.pt"
+        if rw.exists():
+            self.real = self._load(rw, 64)
+        else:
+            self.real = self._load(config.EXPERIMENTS / "stage2_real_asl/best.pt", 32)
+        self.synth = self._load(config.EXPERIMENTS / "stage2_asl_w32/best.pt", 32)
         self.samples = np.load(SAMPLES) if SAMPLES.exists() else None
 
-    def _load(self, p):
-        m = WaferCNN(3, len(CLS), 32).to(self.device).eval()
+    def _load(self, p, width):
+        m = WaferCNN(3, len(CLS), width).to(self.device).eval()
         m.load_state_dict(self.torch.load(p, map_location=self.device))
         return m
 

@@ -48,10 +48,11 @@ def _augment_map(m, rng, max_noise=0.15):
 
 
 class WaferMapDataset(Dataset):
-    def __init__(self, X, Y, idx, augment=False, seed=0):
+    def __init__(self, X, Y, idx, augment=False, seed=0, aug_noise=0.15):
         self.X = X[idx]
         self.Y = Y[idx]
         self.augment = augment
+        self.aug_noise = aug_noise
         self.rng = np.random.default_rng(seed)
 
     def __len__(self):
@@ -60,7 +61,7 @@ class WaferMapDataset(Dataset):
     def __getitem__(self, i):
         m = self.X[i]  # (52,52) in {0,1,2}
         if self.augment:
-            m = _augment_map(m, self.rng)
+            m = _augment_map(m, self.rng, self.aug_noise)
         oh = np.stack([(m == 0), (m == 1), (m == 2)], axis=0).astype(np.float32)  # 3ch one-hot
         return torch.from_numpy(oh), torch.from_numpy(self.Y[i])
 

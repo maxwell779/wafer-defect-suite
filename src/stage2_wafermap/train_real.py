@@ -35,20 +35,24 @@ def main():
     ap.add_argument("--workers", type=int, default=0)
     ap.add_argument("--init", default="", help="SSL 사전학습 encoder.pt 경로(features 초기화)")
     ap.add_argument("--label-frac", type=float, default=1.0, help="train 라벨 사용 비율(저라벨 실험)")
+    ap.add_argument("--seed", type=int, default=config.SEED)
+    ap.add_argument("--augment", action="store_true", help="회전/플립(+약노이즈) 증강")
+    ap.add_argument("--aug-noise", type=float, default=0.05, help="증강 노이즈 비율(실데이터는 낮게)")
+    ap.add_argument("--tag", default="", help="출력 디렉터리 접미사")
     args = ap.parse_args()
 
-    set_seed(config.SEED)
+    set_seed(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
-    tag = ("_ssl" if args.init else "") + (f"_f{args.label_frac:g}" if args.label_frac < 1.0 else "")
+    tag = ("_ssl" if args.init else "") + (f"_f{args.label_frac:g}" if args.label_frac < 1.0 else "") + (args.tag or "")
     out = config.EXPERIMENTS / f"stage2_real_{args.loss}{tag}"
     out.mkdir(parents=True, exist_ok=True)
 
     # ── data (lot-split leak-free) ────────────────────────────────────
     print("[load] WM-811K + 52x52 리사이즈 ...")
     t = time.time()
-    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=config.SEED)
-    tr, va, te = lot_group_split(y_idx, lots, seed=config.SEED)
+    X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=args.seed)
+    tr, va, te = lot_group_split(y_idx, lots, seed=args.seed)
     if args.label_frac < 1.0:                       # 저라벨 실험 (SSL 이득 부각)
         rng = np.random.default_rng(config.SEED)
         tr = rng.choice(tr, int(len(tr) * args.label_frac), replace=False)
@@ -58,10 +62,11 @@ def main():
         f"{cls[i]}:{int(Y[tr][:,i].sum())}" for i in range(len(cls))) +
         f", normal:{int((y_idx[tr]<0).sum())}")
 
-    dl = lambda idx, sh: DataLoader(WaferMapDataset(X, Y, idx), batch_size=args.batch,
-                                    shuffle=sh, num_workers=args.workers,
-                                    pin_memory=(device == "cuda"))
-    tr_dl, va_dl, te_dl = dl(tr, True), dl(va, False), dl(te, False)
+    mk = lambda ds, sh: DataLoader(ds, batch_size=args.batch, shuffle=sh,
+                                   num_workers=args.workers, pin_memory=(device == "cuda"))
+    tr_dl = mk(WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.seed, aug_noise=args.aug_noise), True)
+    va_dl = mk(WaferMapDataset(X, Y, va), False)
+    te_dl = mk(WaferMapDataset(X, Y, te), False)
 
     # ── model/loss/optim ──────────────────────────────────────────────
     model = WaferCNN(in_ch=3, n_classes=len(cls), width=args.width).to(device)

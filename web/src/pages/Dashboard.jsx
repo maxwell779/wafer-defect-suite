@@ -9,7 +9,7 @@ export default function Dashboard({ go }) {
   const defects = runs.filter((r) => r.defect === 1).length;
   const fail = runs.filter((r) => r.status === "FAIL").length;
   const warn = runs.filter((r) => r.status === "WARN").length;
-  const realF1 = metrics.comparison.find((c) => c.name.includes("실데이터")).macro_f1;
+  const realF1 = Math.max(...metrics.comparison.filter((c) => c.name.includes("실데이터") || c.name.includes("보정")).map((c) => c.macro_f1));
 
   const kpis = [
     { v: total, label: "누적 공정 run", cls: "" },

@@ -18,12 +18,12 @@
 - ❌ **합성 결함 생성**: 합성→실제 전이 실패를 이미 입증 → 가치 낮음. *보류(옵션)*
 - ❌ 실시간 팹 연동, 대규모 분산학습, SOTA 경쟁
 
-**성공 기준 (Definition of Done)**
-- Stage1: ML 5종 vs DL 비교 완료 + **변수기여 해석** + "소표본엔 어떤 게 맞나" 결론 1개
-- Stage2: 실데이터 lot-split **macro-F1 ≥ 0.85 달성(현 0.859 ✅)** + 자기지도가 **저라벨에서 scratch 대비 개선**을 수치로 제시
-- Stage3: 라벨정제 후 YOLO11 학습 + 제공 `bestV2.pt` 대비 **mAP@0.5 동급 이상** 또는 차이 설명
-- 웹: 5화면이 목업으로라도 동작 + 핵심 스토리(전이 실패) 시각화
-- 전체: README에 재현법 + 정직한 결과표
+**성공 기준 (Definition of Done) — 달성 현황**
+- Stage1: ML 5종 vs DL + 변수기여 + 30-seed CV 결론 ✅ (고전ML>DL, DL 불안정)
+- Stage2: 실데이터 lot-split macro-F1 ≥ 0.85 ✅ → **강화로 0.890±0.007 / 보정 ~0.90** ✅. (자기지도는 **효과 없음**으로 정직 보고 — 당초 가정과 다름)
+- Stage3: ELLIMAC bestV2 mAP@0.5 0.739 ✅ + **실데이터 Grad-CAM 위치탐지(B) 추가** ✅. (YOLO11 재학습은 미실시)
+- 웹: 5화면 React + FastAPI LIVE 추론 ✅
+- 전체: README 재현법 + 정직한 결과표(negative 포함) ✅
 
 ## 3. 아키텍처 — 3 스테이지
 | 스테이지 | 질문 | 데이터 | 핵심 기법 | 평가 |
@@ -32,28 +32,30 @@
 | **2. 웨이퍼 패턴** ★ | 어떤 패턴 | MixedWM38 + WM-811K | 멀티라벨 분해·합성→실제 전이·**자기지도** | macro-F1·mAP·per-class |
 | **3. 국소 위치** | 어디 | ELLIMAC (YOLO) | 라벨정제 + 검출 | mAP@0.5 |
 
-## 4. 스테이지별 상세 (진행 스냅샷)
+## 4. 스테이지별 상세 (✅ 전부 완료)
 
-### Stage 1 — 공정 센서 (Meruva) ※ML vs DL 비교 [예정]
-- 데이터: 6 수치(temp/pressure/gas/etch_rate/voltage/current) + step, **결함 7/5000(0.14%)**
-- ★ **ML vs DL 정면 비교**: 고전 ML(IsolationForest·One-Class SVM·LOF·Mahalanobis) vs DL(AutoEncoder 재구성오차)
-  - 결론 후보: "양성 7건뿐 → 고전 ML(Mahalanobis/IForest)이 DL보다 안정·해석가능"
-- 변수기여: permutation importance / z-gap (EDA: pressure↓·temp↑·etch↑)
-- 평가: **PR-AUC, recall@k**(정확도 금지). 라벨은 평가에만(비지도)
+### Stage 1 — 공정 센서 (Meruva) ※ML vs DL ✅
+- **ML vs DL** 5종 + **30회 반복 CV(mean±std)** — 양성 7건 단일 split 노이즈 제거
+- 결과: **Mahalanobis 0.295±0.028 / OCSVM 0.294 / LOF 0.294 (통계 동률)** > **AutoEncoder(DL) 0.215±0.095(불안정)** > IForest 0.119
+- 결론: **소표본·저차원엔 고전 ML 우세, DL 불필요·불안정.** 변수기여 pressure↓·etch↑·temp↑
+- `src/stage1_process/run.py`(단일) · `rigor.py`(반복 CV)
 
-### Stage 2 — 웨이퍼 패턴 ★플래그십
-| 실험 | 결과 | 상태 |
+### Stage 2 — 웨이퍼 패턴 ★플래그십 ✅
+| 실험 | macro-F1 | 비고 |
 |---|---|---|
-| 합성(MixedWM38) 멀티라벨 | macro-F1 0.985 / mAP 0.999 | ✅ |
-| 합성→실제 전이 | macro-F1 **0.364**, 정상오탐 0.957 → 도메인갭 규명 | ✅ |
-| A 진단(증강) | 전이 0.311(↓) → "노이즈가 원인" 기각, 갭은 구조적 | ✅ |
-| 실데이터(WM-811K) lot-split | macro-F1 **0.859** / mAP 0.930 ← 메인 벤치마크 | ✅ |
-| C 자기지도(SimCLR 150k) | 사전학습 → 파인튜닝(전체+저라벨) vs scratch | 🔄 진행 |
-- 남은 것: SSL 파인튜닝 비교(특히 **저라벨 10%**), 클래스별 **임계 val 보정**, 혼동분석
+| 합성(MixedWM38) | 0.985 | 합성 쉬움 |
+| 합성→실제 전이 | **0.364** (정상오탐 0.957) | 도메인갭 규명 |
+| A 증강 진단 | 0.311 | "노이즈 원인설" 기각(negative) |
+| 실데이터 lot-split(baseline) | 0.859 | 단일 |
+| C 자기지도(SimCLR) | 0.869 / 저라벨 −0.02 | **효과 없음(negative)** |
+| **실데이터 강화(증강+width64+45ep)** | **0.890 ± 0.007** (3-seed) | ★ |
+| **+ per-class 임계보정(val-only)** | **~0.900** | ★ 최종, Loc 0.72→0.81 |
+- 평가: lot 그룹 분할·다중 seed·임계 val-only. 혼동행렬 산출 완료.
 
-### Stage 3 — 국소 위치 (ELLIMAC) [예정]
-- 라벨 정제(cls6 폴리곤 108파일 제거/매핑) → 깨끗한 YOLO 데이터
-- YOLO11 학습 + 제공 `bestV2.pt` 벤치마크(mAP@0.5), Stage2와 연계
+### Stage 3 — 결함 위치 ✅ (A+B)
+- **B(메인, 실데이터)**: Stage2 실모델 **Grad-CAM** → WM-811K 실제 맵 결함 위치 히트맵(합성 무관). `stage3_localization/gradcam.py`
+- **A(부록, 합성)**: ELLIMAC 폴리곤→bbox 정제+cls6 제거 → bestV2 **mAP@0.5 0.739**. `stage3_detection/benchmark.py`
+  - (YOLO11 재학습은 미실시 — bestV2 벤치마크로 대체, 합성이라 일반화 한계 명시)
 
 ## 5. 데이터 & 라이선스
 > 데이터는 **레포에 포함하지 않음**(대용량·라이선스). `.gitignore`의 `data/`. 사용자는 출처에서 직접 받아 `data/`에 둠.
