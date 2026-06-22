@@ -34,6 +34,9 @@ def eval_once(X, y, seed):
         "Mahalanobis": -EllipticEnvelope(contamination=0.05, random_state=seed).fit(Xtr).score_samples(Xev),
         "AutoEncoder(DL)": ae_scores(Xtr, Xev, epochs=200),
     }
+    from scipy.stats import rankdata
+    ens = np.mean([rankdata(models[m]) for m in ["LOF", "Mahalanobis", "OneClassSVM"]], axis=0)
+    models["Ensemble(rank L+M+O)"] = ens
     out = {}
     for n, s in models.items():
         out[n] = (average_precision_score(yev, s), roc_auc_score(yev, s), recall_at_k(yev, s, 100))

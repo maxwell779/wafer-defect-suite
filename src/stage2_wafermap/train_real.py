@@ -41,7 +41,7 @@ def main():
     ap.add_argument("--size", type=int, default=52, help="입력 해상도")
     ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
     ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
-    ap.add_argument("--arch", choices=["cnn", "resnet"], default="cnn")
+    ap.add_argument("--arch", choices=["cnn", "resnet", "resnet_cbam"], default="cnn")
     ap.add_argument("--init-seed", type=int, default=-1, help="모델 init seed(앙상블용, -1=split seed)")
     ap.add_argument("--tag", default="", help="출력 디렉터리 접미사")
     args = ap.parse_args()

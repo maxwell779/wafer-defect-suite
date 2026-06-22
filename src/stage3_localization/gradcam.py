@@ -15,16 +15,17 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 import config
-from src.stage2_wafermap.model import WaferCNN
+from src.stage2_wafermap.model import build_model
 from src.stage2_wafermap.dataset_wm811k import load_wm811k
 
 WMAP_CMAP = ListedColormap(["#e5e7eb", "#9cc3ff", "#ef4444"])
 
 
-def gradcam(model, x, target):
+def gradcam(model, x, target, layer=None):
     """x:(1,3,52,52). returns cam (52,52) in [0,1] for target class."""
     acts, grads = {}, {}
-    layer = model.features[2][5]            # block2 마지막 ReLU (13x13, width*4 ch)
+    if layer is None:                       # CNN 기본: block2 마지막 ReLU
+        layer = model.features[2][5]
     def fwd(m, i, o):
         acts["a"] = o
         o.register_hook(lambda g: grads.__setitem__("g", g))
@@ -44,8 +45,9 @@ def gradcam(model, x, target):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ckpt", default="experiments/stage2_real_asl/best.pt")
-    ap.add_argument("--width", type=int, default=32)
+    ap.add_argument("--ckpt", default="experiments/stage2_real_asl_resnet/best.pt")
+    ap.add_argument("--width", type=int, default=48)
+    ap.add_argument("--arch", choices=["cnn", "resnet", "resnet_cbam"], default="resnet")
     ap.add_argument("--per-class", type=int, default=1)
     args = ap.parse_args()
 
@@ -53,8 +55,9 @@ def main():
     cls = config.WM_CLASSES
     out = config.EXPERIMENTS / "stage3_localization"; out.mkdir(parents=True, exist_ok=True)
 
-    model = WaferCNN(in_ch=3, n_classes=len(cls), width=args.width).to(device).eval()
+    model = build_model(args.arch, in_ch=3, n_classes=len(cls), width=args.width).to(device).eval()
     model.load_state_dict(torch.load(args.ckpt, map_location=device))
+    layer = model.layers[-1] if args.arch != "cnn" else None  # ResNet 마지막 블록
 
     print("[load] WM-811K 실제 맵 (클래스별 샘플) ...")
     X, Y, y_idx, lots = load_wm811k(include_normal=False, seed=config.SEED)
@@ -70,7 +73,7 @@ def main():
         m = X[i]
         oh = np.stack([(m == 0), (m == 1), (m == 2)], 0).astype(np.float32)
         x = torch.from_numpy(oh)[None].to(device)
-        cam = gradcam(model, x, c)
+        cam = gradcam(model, x, c, layer)
         axes[0, k].imshow(m, cmap=WMAP_CMAP, vmin=0, vmax=2)
         axes[0, k].set_title(cls[c], fontsize=8); axes[0, k].axis("off")
         axes[1, k].imshow(m, cmap=WMAP_CMAP, vmin=0, vmax=2)

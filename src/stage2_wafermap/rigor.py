@@ -15,7 +15,7 @@ from sklearn.metrics import f1_score, confusion_matrix
 import config
 from src.stage2_wafermap.dataset import WaferMapDataset
 from src.stage2_wafermap.dataset_wm811k import load_wm811k, lot_group_split
-from src.stage2_wafermap.model import WaferCNN
+from src.stage2_wafermap.model import build_model
 from src.stage2_wafermap.train import run_eval
 
 
@@ -40,6 +40,7 @@ def main():
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=config.SEED, help="학습과 동일 split seed")
+    ap.add_argument("--arch", choices=["cnn", "resnet", "resnet_cbam"], default="cnn")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
@@ -47,7 +48,7 @@ def main():
     X, Y, y_idx, lots = load_wm811k(normal_cap=args.normal_cap, seed=args.seed)
     tr, va, te = lot_group_split(y_idx, lots, seed=args.seed)
     dl = lambda idx: DataLoader(WaferMapDataset(X, Y, idx), batch_size=256)
-    model = WaferCNN(3, len(cls), args.width).to(device).eval()
+    model = build_model(args.arch, 3, len(cls), args.width).to(device).eval()
     model.load_state_dict(torch.load(args.ckpt, map_location=device))
 
     yv, pv = run_eval(model, dl(va), device)
