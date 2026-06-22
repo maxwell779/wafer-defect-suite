@@ -47,12 +47,44 @@ def _augment_map(m, rng, max_noise=0.15):
     return np.ascontiguousarray(m)
 
 
+def _denoise(m):
+    """전처리: 고립된 불량다이(이웃없는 2) 제거 — 8% 산발 노이즈 정리."""
+    d = (m == 2).astype(np.uint8)
+    from scipy.ndimage import binary_opening
+    keep = binary_opening(d, structure=np.ones((2, 2)))   # 2x2 열림
+    out = m.copy()
+    out[(d == 1) & (keep == 0)] = 1                        # 고립 2 → 정상 1로
+    return out
+
+
+# 좌표/반경 채널(위치 모호성 표적, 모든 샘플 공통)
+_YY, _XX = np.mgrid[0:52, 0:52].astype(np.float32)
+_CX = (_XX - 25.5) / 25.5
+_CY = (_YY - 25.5) / 25.5
+_R = np.sqrt(_CX ** 2 + _CY ** 2)
+
+
+def build_channels(m, inmode):
+    oh = [(m == 0), (m == 1), (m == 2)]                    # 3ch one-hot
+    ch = [c.astype(np.float32) for c in oh]
+    if inmode in ("coord", "coord_radial"):
+        ch += [_CX, _CY]                                   # +2 좌표(CoordConv)
+    if inmode in ("radial", "coord_radial"):
+        ch += [_R]                                         # +1 반경
+    return np.stack(ch, axis=0)
+
+
+CH = {"onehot": 3, "coord": 5, "radial": 4, "coord_radial": 6}
+
+
 class WaferMapDataset(Dataset):
-    def __init__(self, X, Y, idx, augment=False, seed=0, aug_noise=0.15):
+    def __init__(self, X, Y, idx, augment=False, seed=0, aug_noise=0.15, inmode="onehot", denoise=False):
         self.X = X[idx]
         self.Y = Y[idx]
         self.augment = augment
         self.aug_noise = aug_noise
+        self.inmode = inmode
+        self.denoise = denoise
         self.rng = np.random.default_rng(seed)
 
     def __len__(self):
@@ -62,8 +94,9 @@ class WaferMapDataset(Dataset):
         m = self.X[i]  # (52,52) in {0,1,2}
         if self.augment:
             m = _augment_map(m, self.rng, self.aug_noise)
-        oh = np.stack([(m == 0), (m == 1), (m == 2)], axis=0).astype(np.float32)  # 3ch one-hot
-        return torch.from_numpy(oh), torch.from_numpy(self.Y[i])
+        if self.denoise:
+            m = _denoise(m)
+        return torch.from_numpy(build_channels(m, self.inmode)), torch.from_numpy(self.Y[i])
 
 
 def pos_weight_from(Y, idx):

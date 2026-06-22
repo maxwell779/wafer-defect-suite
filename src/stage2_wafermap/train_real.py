@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 import config
 from src.common.seed import set_seed
 from src.common.metrics import multilabel_report, format_report
-from src.stage2_wafermap.dataset import WaferMapDataset, pos_weight_from
+from src.stage2_wafermap.dataset import WaferMapDataset, pos_weight_from, CH
 from src.stage2_wafermap.dataset_wm811k import load_wm811k, lot_group_split
 from src.stage2_wafermap.model import build_model
 from src.stage2_wafermap.losses import build_loss
@@ -42,6 +42,9 @@ def main():
     ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
     ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
     ap.add_argument("--arch", choices=["cnn", "resnet", "resnet_cbam"], default="cnn")
+    ap.add_argument("--inmode", choices=["onehot", "coord", "radial", "coord_radial"], default="onehot",
+                    help="입력채널: coord/radial=위치 모호성 표적")
+    ap.add_argument("--denoise", action="store_true", help="전처리: 고립 불량다이 제거")
     ap.add_argument("--init-seed", type=int, default=-1, help="모델 init seed(앙상블용, -1=split seed)")
     ap.add_argument("--tag", default="", help="출력 디렉터리 접미사")
     args = ap.parse_args()
@@ -70,7 +73,8 @@ def main():
 
     mk = lambda ds, sh: DataLoader(ds, batch_size=args.batch, shuffle=sh,
                                    num_workers=args.workers, pin_memory=(device == "cuda"))
-    tr_ds = WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.init_seed, aug_noise=args.aug_noise)
+    dsk = dict(inmode=args.inmode, denoise=args.denoise)
+    tr_ds = WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.init_seed, aug_noise=args.aug_noise, **dsk)
     if args.balanced:                                   # 희귀클래스 균형 샘플링
         import collections
         yt = y_idx[tr]; cnt = collections.Counter(yt.tolist())
@@ -80,11 +84,11 @@ def main():
                            num_workers=args.workers, pin_memory=(device == "cuda"))
     else:
         tr_dl = mk(tr_ds, True)
-    va_dl = mk(WaferMapDataset(X, Y, va), False)
-    te_dl = mk(WaferMapDataset(X, Y, te), False)
+    va_dl = mk(WaferMapDataset(X, Y, va, **dsk), False)
+    te_dl = mk(WaferMapDataset(X, Y, te, **dsk), False)
 
     # ── model/loss/optim ──────────────────────────────────────────────
-    model = build_model(args.arch, in_ch=3, n_classes=len(cls), width=args.width).to(device)
+    model = build_model(args.arch, in_ch=CH[args.inmode], n_classes=len(cls), width=args.width).to(device)
     if args.init:                                   # 사전학습 가중치 로드(전체 or features)
         sd = torch.load(args.init, map_location=device)
         try:
