@@ -19,7 +19,7 @@ from src.common.seed import set_seed
 from src.common.metrics import multilabel_report, format_report
 from src.stage2_wafermap.dataset import WaferMapDataset, pos_weight_from
 from src.stage2_wafermap.dataset_wm811k import load_wm811k, lot_group_split
-from src.stage2_wafermap.model import WaferCNN
+from src.stage2_wafermap.model import build_model
 from src.stage2_wafermap.losses import build_loss
 from src.stage2_wafermap.train import run_eval
 
@@ -41,10 +41,13 @@ def main():
     ap.add_argument("--size", type=int, default=52, help="입력 해상도")
     ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
     ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
+    ap.add_argument("--arch", choices=["cnn", "resnet"], default="cnn")
+    ap.add_argument("--init-seed", type=int, default=-1, help="모델 init seed(앙상블용, -1=split seed)")
     ap.add_argument("--tag", default="", help="출력 디렉터리 접미사")
     args = ap.parse_args()
-
-    set_seed(args.seed)
+    if args.init_seed < 0:
+        args.init_seed = args.seed
+    set_seed(args.init_seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cls = config.WM_CLASSES
     tag = ("_ssl" if args.init else "") + (f"_f{args.label_frac:g}" if args.label_frac < 1.0 else "") + (args.tag or "")
@@ -67,7 +70,7 @@ def main():
 
     mk = lambda ds, sh: DataLoader(ds, batch_size=args.batch, shuffle=sh,
                                    num_workers=args.workers, pin_memory=(device == "cuda"))
-    tr_ds = WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.seed, aug_noise=args.aug_noise)
+    tr_ds = WaferMapDataset(X, Y, tr, augment=args.augment, seed=args.init_seed, aug_noise=args.aug_noise)
     if args.balanced:                                   # 희귀클래스 균형 샘플링
         import collections
         yt = y_idx[tr]; cnt = collections.Counter(yt.tolist())
@@ -81,7 +84,7 @@ def main():
     te_dl = mk(WaferMapDataset(X, Y, te), False)
 
     # ── model/loss/optim ──────────────────────────────────────────────
-    model = WaferCNN(in_ch=3, n_classes=len(cls), width=args.width).to(device)
+    model = build_model(args.arch, in_ch=3, n_classes=len(cls), width=args.width).to(device)
     if args.init:                                   # SSL 사전학습 encoder 로드
         model.features.load_state_dict(torch.load(args.init, map_location=device))
         print(f"  [init] SSL encoder 로드: {args.init}")
