@@ -23,7 +23,9 @@
 
 ---
 
-## 데모 웹 화면
+## 데모 웹
+
+React(Vite) 단일앱 — **[라이브 데모](https://maxwell779.github.io/wafer-defect-suite/)** 또는 로컬 실행. 5화면 모두 실제 기능(통합 콘솔·Stage1·2·3·Experiments), 다크모드·CSV/PDF 내보내기 지원.
 
 **통합 검사 콘솔** (대시보드 + 통합 리포트 + 의사결정) — 결함 큐·원인 리포트·격리/재검사 조치
 ![통합 콘솔](docs/images/ui_dashboard.png)
@@ -40,8 +42,13 @@
 
 ```bash
 cd web && npm install && npm run dev      # http://localhost:5173 (정적 데모)
-python -m backend.prep_samples && uvicorn backend.main:app --port 8000   # LIVE 추론(선택)
 ```
+**LIVE 추론(선택)** — FastAPI 백엔드 연결 시 실제 모델 추론:
+```bash
+python -m backend.prep_samples            # 최초 1회 (samples.npz)
+uvicorn backend.main:app --port 8000      # 백엔드
+```
+웹이 백엔드를 감지하면 상단 배지가 **LIVE**로 바뀌고 — Stage1 슬라이더→실시간 LOF 점수, Stage2 "⚡LIVE 추론"→실모델 예측·Grad-CAM(합성vs실 전이 실패를 실시간으로), Stage3→실제 YOLO11m 검출. 백엔드 없으면 정적 DEMO로 폴백.
 
 ---
 
@@ -104,20 +111,6 @@ python -m backend.prep_samples && uvicorn backend.main:app --port 8000   # LIVE 
   `python -m src.stage3_detection.benchmark`
 
 ---
-
-## 데모 웹 (`web/`)
-React(Vite) 단일앱. 5화면 모두 실제 기능:
-Dashboard · Stage1(테이블·관리도·파라미터 추천·ML vs DL) · Stage2(갤러리·판정·Grad-CAM 히트맵·합성vs실데이터 토글) · Stage3(Grad-CAM 위치탐지 + ELLIMAC 검출) · Experiments(추이·per-class·혼동행렬).
-```bash
-cd web && npm install && npm run dev   # http://localhost:5173
-```
-**LIVE 추론(선택)** — FastAPI 백엔드 연결 시 실제 모델 추론:
-```bash
-python -m backend.prep_samples            # 최초 1회
-uvicorn backend.main:app --port 8000      # 백엔드
-```
-웹이 백엔드를 감지하면 상단 배지가 **LIVE**로 바뀌고, Stage1 슬라이더→실시간 LOF 점수,
-Stage2 "⚡LIVE 추론"→실제 WaferCNN 예측(실모델 vs 합성모델 전이 실패를 실시간으로). 백엔드 없으면 정적 데모로 폴백.
 
 ## 배포
 
