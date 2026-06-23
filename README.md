@@ -137,7 +137,7 @@ docker compose up --build           # → http://localhost:8000 (DEMO)
 ```
 src/stage1_process/   공정 이상탐지(ML vs DL)
 src/stage2_wafermap/  데이터셋·모델·학습(합성/실데이터)·전이·자기지도·Grad-CAM은 stage3로
-src/stage3_localization/  Grad-CAM 위치탐지(실)   src/stage3_detection/  ELLIMAC YOLO(합성)
+src/stage3_localization/  Grad-CAM 위치탐지(실)   src/stage3_detection/  ELLIMAC YOLO(실 칩표면 사진)
 src/common/           metrics(멀티라벨)·seed
 backend/              FastAPI 추론 서버(+ 빌드된 web 정적 서빙)
 tools/overnight/      대규모 자동 실험 오케스트레이터(CPU∥GPU) · Stage1 메가서치
