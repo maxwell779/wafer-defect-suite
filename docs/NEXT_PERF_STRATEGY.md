@@ -41,7 +41,7 @@
 → 한계: Loc↔Edge-Loc/Center, Scratch↔Loc 혼동은 **본질적**(저밀도·산발) → ~0.94 천장 추정.
 
 ## Stage 3 — 추가 향상
-**A 검출(ELLIMAC, 합성)**
+**A 검출(ELLIMAC, 실제 칩표면 사진)**
 | 방법 | ROI | |
 |---|---|---|
 | YOLO11m/l + 증강·imgsz↑ | 中 | 진행중(11m 200ep) |

@@ -9,7 +9,7 @@ const DET_COLORS = { Center: "#dc2626", Donut: "#d97706", "Edge-Loc": "#2563eb",
 const DET_IDX = Object.keys(DET).map(Number).sort((a, b) => a - b);  // [0..7]
 const CAM_CLASSES = WM_CLASSES; // 8 클래스 Grad-CAM
 
-export default function Stage3Detection({ live }) {
+export default function Stage3Detection({ live, go }) {
   const [view, setView] = useState("det"); // det(ELLIMAC 칩표면, 기본) / loc(Grad-CAM)
   const [imgIdx, setImgIdx] = useState(0);
   const [conf, setConf] = useState(0.3);
@@ -123,6 +123,14 @@ export default function Stage3Detection({ live }) {
       )}
 
       {view === "det" && <div className="note warn">ℹ ELLIMAC은 Roboflow의 <b>실제 칩/다이 표면 사진</b>(증강 적용) — 웨이퍼맵과 <b>다른 도메인</b>이라 우리 과제 일반화는 제한적(검출 스킬 데모). 폴리곤→bbox 정제 + cls6 18줄 제거 후 YOLO11m test <b>mAP@0.5 0.753</b>(bestV2 0.739↑, 11l 0.755 동률→11m 유지).</div>}
+
+      <div className="note" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <span>결함 판정·조치는 통합 콘솔에서 종합됩니다.</span>
+        <span style={{ display: "flex", gap: 8 }}>
+          <button className="btn" onClick={() => go && go("experiments")}>Experiments</button>
+          <button className="btn on" onClick={() => go && go("dashboard")}>통합 콘솔 →</button>
+        </span>
+      </div>
     </div>
   );
 }

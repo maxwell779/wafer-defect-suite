@@ -102,7 +102,7 @@ select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px;
 .btn.on { background: var(--blue); color: #fff; border-color: var(--blue); }
 .note { background: #f8fafc; border: 1px solid var(--border); border-radius: 11px; padding: 13px 16px; font-size: 14.5px; line-height: 1.6; color: #475569; }
 .warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-.bar-track { background: #eef2f7; border-radius: 6px; height: 18px; overflow: hidden; }
+.bar-track { background: var(--grid); border-radius: 6px; height: 18px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 6px; }
 a.link { color: var(--blue); cursor: pointer; }
 /* 클릭 가능한 카드 hover 부각 */
@@ -123,6 +123,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* 빈 상태 */
 .empty { text-align: center; color: var(--muted); padding: 28px 10px; font-size: 14px; }
 .theme-btn { border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 8px; padding: 5px 9px; cursor: pointer; font-size: 14px; }
+/* 인쇄(PDF 저장) — 상단바·버튼 숨기고 카드만 깔끔히 */
+@media print {
+  .topbar, .btn, button { display: none !important; }
+  .app { background: #fff !important; }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  .wrap { max-width: none; padding: 0; }
+}
 
 /* ── 반응형 ── */
 @media (max-width: 1024px) {

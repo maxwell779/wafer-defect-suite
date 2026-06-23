@@ -29,7 +29,7 @@ function MapCanvas({ map, cam, showCam }) {
   return <canvas ref={ref} style={{ width: "100%", borderRadius: 8, imageRendering: "pixelated", border: "1px solid var(--border)" }} />;
 }
 
-export default function Stage2WaferMap({ live }) {
+export default function Stage2WaferMap({ live, go }) {
   const [cls, setCls] = useState("ALL");
   const realMaps = wmaps.filter((m) => m.source === "real");   // 합성 이미지는 갤러리에서 제외(실데이터만)
   const [selId, setSelId] = useState(realMaps[0]?.id || wmaps[0].id);
@@ -124,6 +124,14 @@ export default function Stage2WaferMap({ live }) {
         )}
         {!cmp && <div className="sub" style={{ marginTop: 10 }}>버튼을 켜면 동일 맵에 대한 두 모델 예측이 나란히 표시됩니다.</div>}
       </Card>
+
+      <div className="note" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <span>학습 전략·성능 향상은 Experiments에 정리돼 있습니다.</span>
+        <span style={{ display: "flex", gap: 8 }}>
+          <button className="btn" onClick={() => go && go("experiments")}>Experiments</button>
+          <button className="btn on" onClick={() => go && go("dashboard")}>통합 콘솔 →</button>
+        </span>
+      </div>
     </div>
   );
 }

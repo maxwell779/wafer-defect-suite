@@ -56,7 +56,7 @@
 
 ### Stage 3 — 결함 위치 ✅ (A+B)
 - **B(메인, 실데이터)**: Stage2 실모델 **Grad-CAM** → WM-811K 실제 맵 결함 위치 히트맵(합성 무관). `stage3_localization/gradcam.py`
-- **A(부록, 합성)**: ELLIMAC 폴리곤→bbox 정제+cls6 제거 → bestV2 **mAP@0.5 0.739**. `stage3_detection/benchmark.py`
+- **A(부록, 실제 칩표면 사진)**: ELLIMAC 폴리곤→bbox 정제+cls6 제거 → YOLO11m **mAP@0.5 0.753**(11l 동률). `stage3_detection/benchmark.py`
   - (YOLO11 재학습은 미실시 — bestV2 벤치마크로 대체, 합성이라 일반화 한계 명시)
 
 ## 5. 데이터 & 라이선스
@@ -66,7 +66,7 @@
 |---|---|---|
 | WM-811K (LSWMD.pkl) | MIR Lab / Wu et al. 2015 (Kaggle 재배포) | 실데이터 811k, 연구용 |
 | MixedWM38 (npz) | Kaggle(co1d7era) / Wang et al. | 합성 멀티라벨 38k |
-| ELLIMAC (YOLO) | Kaggle(ellimaaac) / Roboflow 생성 | 검출, 합성 혼재·라벨노이즈 |
+| ELLIMAC (YOLO) | Kaggle(ellimaaac) / Roboflow | 실제 칩표면 사진+검출 라벨(증강), 다른 도메인 |
 | Meruva (csv) | Kaggle(Meruva Kodanda Suraj) | 공정센서 테이블(합성 가능성) |
 - 각 데이터 **출처/라이선스 링크를 README에 명시**, 포트폴리오/연구 목적 사용.
 
@@ -103,7 +103,7 @@
 |---|---|---|
 | 도메인 갭(합성→실제) | 합성모델 실전 무용 | 실데이터 학습(B) 완료, 한계 그대로 보고 |
 | **Meruva 양성 7건** | 통계적 불안정, 결론 과신 위험 | "데모/탐색 수준" 명시, recall@k로만, 일반화 자제 |
-| ELLIMAC 라벨노이즈+Roboflow 합성 | 검출 일반화 한계 | 라벨정제 + 한계 문서화, 실데이터 아님 명시 |
+| ELLIMAC 다른 도메인(칩표면) | 우리 웨이퍼 과제 일반화 한계 | 라벨정제 + 도메인 차이 명시(검출 스킬 데모) |
 | 누수/과적합 | 수치 부풀림 | lot-split·seed·임계 val-only |
 | 웹 라이브 추론 복잡도 | 일정 지연 | **정적 데모(JSON) 폴백** 우선 |
 

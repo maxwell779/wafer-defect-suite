@@ -47,7 +47,7 @@
 ---
 
 ## Stage 3 — 결함 위치 (검출 A + Grad-CAM B)
-현재: A ELLIMAC bestV2 mAP@0.5 **0.739**(합성) / B Grad-CAM(정성).
+현재: A ELLIMAC YOLO11m mAP@0.5 **0.753**(실제 칩표면 사진) / B Grad-CAM(정성).
 
 | 방법 | 상태 | 기대 | 근거 |
 |---|---|---|---|
