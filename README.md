@@ -116,15 +116,32 @@ uvicorn backend.main:app --port 8000      # 백엔드
 웹이 백엔드를 감지하면 상단 배지가 **LIVE**로 바뀌고, Stage1 슬라이더→실시간 LOF 점수,
 Stage2 "⚡LIVE 추론"→실제 WaferCNN 예측(실모델 vs 합성모델 전이 실패를 실시간으로). 백엔드 없으면 정적 데모로 폴백.
 
+## 배포
+
+**① 정적 데모 (GitHub Pages)** — 모델 불필요, DEMO 모드 공개 URL
+`.github/workflows/deploy-pages.yml` 이 main push마다 빌드→배포. 저장소 **Settings → Pages → Source: GitHub Actions** 한 번 설정 후:
+`https://maxwell779.github.io/wafer-defect-suite/`
+
+**② Docker (LIVE 추론, 어디서나 한 방)** — 프론트+FastAPI 단일 컨테이너
+```bash
+docker compose up --build           # → http://localhost:8000 (DEMO)
+# LIVE 추론(가중치)은 compose의 volumes(experiments/·data/) 주석 해제 후 재실행
+```
+- CI: `.github/workflows/ci.yml` (web 빌드 + 백엔드 문법 체크)
+- 정적 호스트(Pages)는 백엔드가 없어 자동 DEMO 폴백, Docker/로컬은 같은 오리진 `/api` 로 LIVE.
+
 ## 구조
 ```
 src/stage1_process/   공정 이상탐지(ML vs DL)
 src/stage2_wafermap/  데이터셋·모델·학습(합성/실데이터)·전이·자기지도·Grad-CAM은 stage3로
 src/stage3_localization/  Grad-CAM 위치탐지(실)   src/stage3_detection/  ELLIMAC YOLO(합성)
 src/common/           metrics(멀티라벨)·seed
+backend/              FastAPI 추론 서버(+ 빌드된 web 정적 서빙)
 tools/overnight/      대규모 자동 실험 오케스트레이터(CPU∥GPU) · Stage1 메가서치
-web/                  React 데모 콘솔
-docs/                 PRD · EDA · 웹 디자인 프롬프트 · overnight/SUMMARY.md(대규모 실험 종합)
+web/                  React 데모 콘솔(Vite)
+docs/                 PRD · RESULTS(결과 종합) · overnight/SUMMARY · images(스크린샷)
+notebooks/            EDA 노트
+Dockerfile · docker-compose.yml · .github/workflows/   배포·CI
 data/ , experiments/  데이터·산출물 (git 제외)
 ```
 

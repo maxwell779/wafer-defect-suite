@@ -81,3 +81,10 @@ def stage3_detect_sample(idx: int, conf: float = 0.25):
     jpgs = sorted(img.glob("*.jpg"))
     p = jpgs[idx % len(jpgs)]
     return {"image": p.name, "boxes": models.stage3().detect(str(p), conf=conf)}
+
+
+# ── 빌드된 프론트엔드 서빙(Docker 단일 컨테이너) — dist 있으면 SPA를 / 로 ──
+_DIST = Path(__file__).resolve().parents[1] / "web/dist"
+if _DIST.exists():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(_DIST), html=True), name="web")

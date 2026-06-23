@@ -3,7 +3,7 @@ import { Card, WM_CLASSES } from "../ui.jsx";
 import { stage3DetectUpload } from "../api.js";
 import DET from "../appdata/ellimac_dets.json";   // 실제 yolo11m 추론 박스(8장)
 
-const url = (f) => "/assets/" + f;
+const url = (f) => import.meta.env.BASE_URL + "assets/" + f;  // base-aware(배포 하위경로 대응)
 const ei = (i) => "ellimac_" + String(i).padStart(2, "0") + ".jpg";   // 2자리 zero-pad(10장+ 대응)
 const DET_COLORS = { Center: "#dc2626", Donut: "#d97706", "Edge-Loc": "#2563eb", "Edge-Ring": "#7c3aed", Loc: "#16a34a", Scratch: "#db2777" };
 const DET_IDX = Object.keys(DET).map(Number).sort((a, b) => a - b);  // [0..7]

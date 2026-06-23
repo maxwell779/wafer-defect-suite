@@ -3,7 +3,7 @@ import { Card, HBars, WM_CLASSES } from "../ui.jsx";
 import { stage2Sample } from "../api.js";
 import wmaps from "../appdata/wafermaps.json";
 
-const url = (f) => "/" + f; // public/assets
+const url = (f) => import.meta.env.BASE_URL + f; // base-aware(배포 하위경로 대응)
 
 // 52x52 웨이퍼맵 배열 + Grad-CAM 오버레이 캔버스(LIVE 실모델 CAM 렌더)
 function MapCanvas({ map, cam, showCam }) {

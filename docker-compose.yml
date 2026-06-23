@@ -1,0 +1,11 @@
+# 한 방 실행: docker compose up --build  → http://localhost:8000
+# LIVE 추론(가중치)이 있으면 아래 volumes 주석 해제(experiments/·data/ 마운트)
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    # volumes:
+    #   - ./experiments:/app/experiments   # 학습 가중치(LIVE 추론용)
+    #   - ./data:/app/data                 # 샘플/데이터셋
+    restart: unless-stopped

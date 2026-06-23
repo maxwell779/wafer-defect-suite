@@ -1,5 +1,7 @@
 // 백엔드(FastAPI) 연결 — 미실행 시 graceful 폴백(정적 데모 유지)
-const BASE = (typeof window !== "undefined" && window.__API_BASE__) || "http://localhost:8000";
+// dev: 별도 백엔드(localhost:8000) / prod(Docker·배포): 같은 오리진(""→/api). 정적호스트(Pages)면 404→DEMO.
+const BASE = (typeof window !== "undefined" && window.__API_BASE__) ||
+  (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 async function j(path, opts) {
   const r = await fetch(BASE + path, opts);
