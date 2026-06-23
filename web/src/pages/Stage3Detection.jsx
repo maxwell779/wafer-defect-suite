@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Card, WM_CLASSES } from "../ui.jsx";
 import { stage3DetectUpload } from "../api.js";
+import DET from "../appdata/ellimac_dets.json";   // 실제 yolo11m 추론 박스(8장)
 
 const url = (f) => "/assets/" + f;
+const ei = (i) => "ellimac_" + String(i).padStart(2, "0") + ".jpg";   // 2자리 zero-pad(10장+ 대응)
 const DET_COLORS = { Center: "#dc2626", Donut: "#d97706", "Edge-Loc": "#2563eb", "Edge-Ring": "#7c3aed", Loc: "#16a34a", Scratch: "#db2777" };
-const DET = {
-  0: [{ x: .40, y: .42, w: .20, h: .22, cls: "Edge-Ring", conf: .91 }, { x: .07, y: .07, w: .13, h: .13, cls: "Center", conf: .44 }, { x: .05, y: .55, w: .10, h: .10, cls: "Loc", conf: .33 }],
-  1: [{ x: .45, y: .48, w: .12, h: .13, cls: "Center", conf: .95 }, { x: .86, y: .10, w: .10, h: .16, cls: "Edge-Loc", conf: .52 }, { x: .86, y: .62, w: .10, h: .14, cls: "Edge-Loc", conf: .41 }],
-  2: [{ x: .40, y: .46, w: .07, h: .09, cls: "Loc", conf: .74 }, { x: .46, y: .52, w: .05, h: .07, cls: "Loc", conf: .58 }, { x: .20, y: .30, w: .06, h: .06, cls: "Scratch", conf: .29 }],
-  3: [{ x: .46, y: .05, w: .16, h: .90, cls: "Scratch", conf: .88 }, { x: .30, y: .40, w: .12, h: .16, cls: "Edge-Loc", conf: .46 }],
-};
+const DET_IDX = Object.keys(DET).map(Number).sort((a, b) => a - b);  // [0..7]
 const CAM_CLASSES = WM_CLASSES; // 8 클래스 Grad-CAM
 
 export default function Stage3Detection({ live }) {
-  const [view, setView] = useState("loc"); // loc(B,메인) / det(A,부록)
+  const [view, setView] = useState("det"); // det(ELLIMAC 칩표면, 기본) / loc(Grad-CAM)
   const [imgIdx, setImgIdx] = useState(0);
   const [conf, setConf] = useState(0.3);
   const [liveBoxes, setLiveBoxes] = useState(null);  // 백엔드 실제 추론 결과(이미지별)
@@ -25,24 +22,24 @@ export default function Stage3Detection({ live }) {
   // LIVE: 화면의 그 이미지를 업로드 추론(정확히 같은 이미지 → 박스 정합)
   function runLive() {
     setBusy(true); setLiveErr("");
-    stage3DetectUpload(url("ellimac_0" + imgIdx + ".jpg"), 0.05)
+    stage3DetectUpload(url(ei(imgIdx)), 0.05)
       .then((r) => setLiveBoxes(r.boxes || []))
       .catch(() => setLiveErr("백엔드 추론 실패 — 정적 예시로 폴백"))
       .finally(() => setBusy(false));
   }
 
-  const srcBoxes = liveBoxes ?? DET[imgIdx];
+  const srcBoxes = liveBoxes ?? (DET[imgIdx] || []);
   const boxes = srcBoxes.filter((b) => b.conf >= conf);
   const counts = Object.keys(DET_COLORS).map((c) => [c, srcBoxes.filter((b) => b.cls === c && b.conf >= conf).length]);
 
   return (
     <div className="grid">
       <div><h1 className="page">Stage 3 — Defect Localization & Detection</h1>
-        <div className="sub">결함이 <b>어디</b>에 있는지 — 실데이터 위치탐지(메인) + 합성 검출(부록)</div></div>
+        <div className="sub">결함이 <b>어디</b>에 있는지 — ELLIMAC 칩표면 객체검출(YOLO) + WM-811K 실데이터 위치탐지(Grad-CAM)</div></div>
 
       <div style={{ display: "flex", gap: 8 }}>
-        <button className={"btn" + (view === "loc" ? " on" : "")} onClick={() => setView("loc")}>위치탐지 (Grad-CAM · 실데이터) ★</button>
-        <button className={"btn" + (view === "det" ? " on" : "")} onClick={() => setView("det")}>객체검출 (YOLO · ELLIMAC 합성)</button>
+        <button className={"btn" + (view === "det" ? " on" : "")} onClick={() => setView("det")}>객체검출 (YOLO11m · ELLIMAC 칩표면) ★</button>
+        <button className={"btn" + (view === "loc" ? " on" : "")} onClick={() => setView("loc")}>위치탐지 (Grad-CAM · WM-811K)</button>
       </div>
 
       {view === "loc" && (
@@ -61,9 +58,9 @@ export default function Stage3Detection({ live }) {
 
       {view === "det" && (
         <div className="grid" style={{ gridTemplateColumns: "1fr 280px" }}>
-          <Card title="검출 결과" sub={`ellimac_0${imgIdx} · YOLO11m · ${liveBoxes ? "⚡LIVE 실추론" : "정적 예시"}`}>
+          <Card title="검출 결과" sub={`ellimac_${String(imgIdx).padStart(2,"0")} · YOLO11m · ${liveBoxes ? "⚡LIVE 재추론" : "추론 결과(저장본)"}`}>
             <div style={{ position: "relative" }}>
-              <img src={url("ellimac_0" + imgIdx + ".jpg")} style={{ width: "100%", borderRadius: 8 }} />
+              <img src={url(ei(imgIdx))} style={{ width: "100%", borderRadius: 8 }} />
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
                 {boxes.map((b, i) => {
                   const col = DET_COLORS[b.cls] || "#0ea5e9";
@@ -91,12 +88,12 @@ export default function Stage3Detection({ live }) {
                 {liveErr && <span className="sub" style={{ margin: 0, color: "var(--red)" }}>{liveErr}</span>}
               </div>
             )}
-            {!live && <div className="sub" style={{ marginTop: 8 }}>박스는 정적 예시 — 백엔드(LIVE) 연결 시 이 이미지를 실제 YOLO11m로 추론합니다.</div>}
+            {!live && <div className="sub" style={{ marginTop: 8 }}>박스 = 실제 YOLO11m 추론 결과(저장본). LIVE 연결 시 이 이미지를 즉석 재추론.</div>}
           </Card>
           <div className="grid">
             <Card title="이미지 선택">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {[0, 1, 2, 3].map((i) => <img key={i} src={url("ellimac_0" + i + ".jpg")} onClick={() => setImgIdx(i)}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxHeight: 360, overflow: "auto" }}>
+                {DET_IDX.map((i) => <img key={i} src={url(ei(i))} onClick={() => setImgIdx(i)}
                   style={{ width: "100%", borderRadius: 6, cursor: "pointer", border: i === imgIdx ? "2px solid var(--blue)" : "1px solid var(--border)" }} />)}
               </div>
             </Card>
@@ -112,7 +109,7 @@ export default function Stage3Detection({ live }) {
         </div>
       )}
 
-      {view === "det" && <div className="note warn">⚠ ELLIMAC은 Roboflow <b>합성</b> 데이터 — 폴리곤→bbox 정제 + cls6 18줄 제거 후 YOLO11m test <b>mAP@0.5 0.753</b>(bestV2 0.739↑, 11l 0.755 동률→11m 유지). 합성이라 실전 일반화 보장 없음(스킬 데모·부록).</div>}
+      {view === "det" && <div className="note warn">ℹ ELLIMAC은 Roboflow의 <b>실제 칩/다이 표면 사진</b>(증강 적용) — 웨이퍼맵과 <b>다른 도메인</b>이라 우리 과제 일반화는 제한적(검출 스킬 데모). 폴리곤→bbox 정제 + cls6 18줄 제거 후 YOLO11m test <b>mAP@0.5 0.753</b>(bestV2 0.739↑, 11l 0.755 동률→11m 유지).</div>}
     </div>
   );
 }

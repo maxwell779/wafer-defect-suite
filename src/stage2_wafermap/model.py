@@ -170,17 +170,17 @@ def _tv_resnet(in_ch, n_classes, depth=18):
     return net
 
 
-def build_model(arch, in_ch=3, n_classes=8, width=32, pool="gap"):
+def build_model(arch, in_ch=3, n_classes=8, width=32, pool="gap", dropout=0.3):
     if arch == "resnet":
-        return WaferResNet(in_ch, n_classes, width, attn="se", pool=pool)
+        return WaferResNet(in_ch, n_classes, width, dropout=dropout, attn="se", pool=pool)
     if arch == "resnet_cbam":
-        return WaferResNet(in_ch, n_classes, width, attn="cbam", pool=pool)
+        return WaferResNet(in_ch, n_classes, width, dropout=dropout, attn="cbam", pool=pool)
     if arch == "tvresnet18":
         return _tv_resnet(in_ch, n_classes, 18)
     if arch == "tvresnet34":
         return _tv_resnet(in_ch, n_classes, 34)
     if arch == "vit":
-        return WaferViT(in_ch, n_classes, dim=max(width * 2, 96))
+        return WaferViT(in_ch, n_classes, dim=max(width * 2, 96), dropout=dropout)
     if arch == "dilated":
-        return WaferDilatedCNN(in_ch, n_classes, width, pool=pool)
-    return WaferCNN(in_ch, n_classes, width, pool=pool)
+        return WaferDilatedCNN(in_ch, n_classes, width, dropout=dropout, pool=pool)
+    return WaferCNN(in_ch, n_classes, width, dropout=dropout, pool=pool)

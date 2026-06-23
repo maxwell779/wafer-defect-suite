@@ -3,16 +3,14 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Stage1Process from "./pages/Stage1Process.jsx";
 import Stage2WaferMap from "./pages/Stage2WaferMap.jsx";
 import Stage3Detection from "./pages/Stage3Detection.jsx";
-import Stage4Report from "./pages/Stage4Report.jsx";
 import Experiments from "./pages/Experiments.jsx";
 import { apiHealth } from "./api.js";
 
 const TABS = [
-  ["dashboard", "Dashboard"],
+  ["dashboard", "통합 콘솔"],
   ["stage1", "Stage 1 · 공정 모니터"],
   ["stage2", "Stage 2 · 웨이퍼맵"],
   ["stage3", "Stage 3 · 결함 검출/위치"],
-  ["stage4", "Stage 4 · 통합 리포트"],
   ["experiments", "Experiments"],
 ];
 
@@ -33,11 +31,10 @@ export default function App() {
       </div>
       <div className="wrap">
         {tab === "dashboard" && <Dashboard go={setTab} />}
-        {tab === "stage1" && <Stage1Process live={live} />}
-        {tab === "stage2" && <Stage2WaferMap live={live} />}
-        {tab === "stage3" && <Stage3Detection live={live} />}
-        {tab === "stage4" && <Stage4Report />}
-        {tab === "experiments" && <Experiments />}
+        {tab === "stage1" && <Stage1Process live={live} go={setTab} />}
+        {tab === "stage2" && <Stage2WaferMap live={live} go={setTab} />}
+        {tab === "stage3" && <Stage3Detection live={live} go={setTab} />}
+        {tab === "experiments" && <Experiments go={setTab} />}
       </div>
     </div>
   );

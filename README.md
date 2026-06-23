@@ -14,7 +14,29 @@
 |---|---|---|---|---|
 | **1. 공정** | 왜 생기나 | Meruva (실, 결함 7/5000) | ML vs DL 이상탐지 + 피처eng + 지도/비지도 하이브리드 | 표적 교호작용으로 PR-AUC **0.31→0.81**(reps40 CI, 비지도 Maha 최강). 500조합·스태킹·PU 등 신규기법 천장 못넘음 규명 |
 | **2. 웨이퍼 패턴** ★ | 어떤 패턴 | MixedWM38(합성)+WM-811K(실) | 멀티라벨 분류·전이·SE-ResNet | 합성 0.985 → **전이 0.364** → SE-ResNet 6앙상블 **0.935**(macro-F1) |
-| **3. 결함 위치** | 어디 | WM-811K(실) / ELLIMAC(합성) | Grad-CAM(메인) + YOLO(부록) | 실데이터 위치탐지 / ELLIMAC YOLO11m mAP@0.5 **0.753**(11l 무이득) |
+| **3. 결함 위치** | 어디 | WM-811K(실) / ELLIMAC(실사진) | Grad-CAM(메인) + YOLO(부록) | 실데이터 위치탐지 / ELLIMAC YOLO11m mAP@0.5 **0.753**(11l 무이득) |
+
+---
+
+## 데모 웹 화면
+
+**통합 검사 콘솔** (대시보드 + 통합 리포트 + 의사결정) — 결함 큐·원인 리포트·격리/재검사 조치
+![통합 콘솔](docs/images/ui_dashboard.png)
+
+**Stage 1 공정 모니터** (관리도·이상점수·파라미터 추천) / **Stage 2 웨이퍼맵** (판정·Grad-CAM)
+<p>
+<img src="docs/images/ui_stage1.png" width="49%" /> <img src="docs/images/ui_stage2.png" width="49%" />
+</p>
+
+**Stage 3 결함 검출** (ELLIMAC 칩표면 YOLO11m, 실제 추론 박스) / **Experiments** (단계별 성능 향상·전이실패 규명)
+<p>
+<img src="docs/images/ui_stage3.png" width="49%" /> <img src="docs/images/ui_experiments.png" width="49%" />
+</p>
+
+```bash
+cd web && npm install && npm run dev      # http://localhost:5173 (정적 데모)
+python -m backend.prep_samples && uvicorn backend.main:app --port 8000   # LIVE 추론(선택)
+```
 
 ---
 
@@ -104,9 +126,17 @@ docs/                 PRD · EDA · 웹 디자인 프롬프트 · overnight/SUMM
 data/ , experiments/  데이터·산출물 (git 제외)
 ```
 
-## 데이터 & 라이선스
-데이터는 레포에 미포함(`.gitignore`). 출처에서 받아 `data/` 에 둔다.
-- WM-811K (MIR Lab / Wu et al. 2015) · MixedWM38 (Kaggle/Wang et al.) · ELLIMAC (Kaggle/Roboflow) · Meruva (Kaggle). 연구·포트폴리오 목적.
+## 데이터 & 출처
+데이터는 레포에 미포함(`.gitignore`). 아래 출처에서 받아 `data/` 에 둔다. 연구·포트폴리오 목적.
+
+| 데이터셋 | 내용 | 출처 |
+|---|---|---|
+| **WM-811K** | 실제 웨이퍼맵 811k (LSWMD) | [Kaggle: qingyi/wm811k-wafer-map](https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map) · [이미지판](https://www.kaggle.com/datasets/muhammedjunayed/wm811k-silicon-wafer-map-dataset-image) (MIR Lab / Wu et al. 2015) |
+| **MixedWM38** | 합성 멀티라벨 웨이퍼맵 38k | [Kaggle: co1d7era/mixedtype-wafer-defect-datasets](https://www.kaggle.com/datasets/co1d7era/mixedtype-wafer-defect-datasets) (Wang et al.) |
+| **ELLIMAC** | 실제 칩/다이 표면 결함 사진 + 검출 라벨 | [Kaggle: ellimaaac/wafer-defects-images-annotations-model](https://www.kaggle.com/datasets/ellimaaac/wafer-defects-images-annotations-model) · [Roboflow](https://universe.roboflow.com/wafer-irhuv/wafer-defect-rv1vx) |
+| **Meruva** | 공정 센서 테이블(결함 7/5000) | [Kaggle: meruvakodandasuraj/semiconductor-wafer-defect-classification-dataset](https://www.kaggle.com/datasets/meruvakodandasuraj/semiconductor-wafer-defect-classification-dataset) |
+
+> ELLIMAC은 **실제 칩표면 사진**(Roboflow 증강)이며 웨이퍼맵과 도메인이 달라 검출 스킬 데모로 활용. MixedWM38(합성)은 학습이 아니라 "합성→실 전이 실패"를 보이는 대조군으로만 사용.
 
 ## 평가 원칙
 leak-free(lot 그룹 분할, seed 고정, 임계 val-only) · per-class·불균형(macro-F1·mAP·PR-AUC) · **정직성**(전이 실패·negative result 그대로 보고).

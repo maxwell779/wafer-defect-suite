@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--batch", type=int, default=256)
     ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--wd", type=float, default=1e-4, help="weight decay(AdamW)")
     ap.add_argument("--loss", choices=["bce", "asl", "focal", "tversky", "ldam", "smoothbce"], default="asl")
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000, help="정상('none') 표본 상한(0=전체)")
@@ -102,7 +103,7 @@ def main():
     pw = pos_weight_from(Y, tr).to(device) if args.loss in ("bce", "focal", "ldam", "smoothbce") else None
     cls_count = torch.as_tensor(Y[tr].sum(0))
     criterion = build_loss(args.loss, pos_weight=pw, cls_count=cls_count)
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
 
     def mix_batch(x, y, mode, alpha=0.4):

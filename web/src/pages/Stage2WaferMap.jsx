@@ -6,9 +6,9 @@ import wmaps from "../appdata/wafermaps.json";
 const url = (f) => "/" + f; // public/assets
 
 export default function Stage2WaferMap({ live }) {
-  const [src, setSrc] = useState("ALL");
   const [cls, setCls] = useState("ALL");
-  const [selId, setSelId] = useState(wmaps.find((m) => m.source === "real")?.id || wmaps[0].id);
+  const realMaps = wmaps.filter((m) => m.source === "real");   // 합성 이미지는 갤러리에서 제외(실데이터만)
+  const [selId, setSelId] = useState(realMaps[0]?.id || wmaps[0].id);
   const [model, setModel] = useState("real");
   const [thr, setThr] = useState(0.5);
   const [heat, setHeat] = useState(false);
@@ -16,7 +16,7 @@ export default function Stage2WaferMap({ live }) {
   const [liveRes, setLiveRes] = useState(null);
   const [liveErr, setLiveErr] = useState("");
 
-  const gallery = wmaps.filter((m) => (src === "ALL" || m.source === src) && (cls === "ALL" || m.classes.includes(cls)));
+  const gallery = realMaps.filter((m) => (cls === "ALL" || m.classes.includes(cls)));
   const sel = wmaps.find((m) => m.id === selId);
   useEffect(() => { setLiveRes(null); setLiveErr(""); }, [selId]);   // 맵 바뀌면 라이브 결과 초기화
   const staticPred = model === "real" ? sel.pred_real : sel.pred_synth;
@@ -35,8 +35,7 @@ export default function Stage2WaferMap({ live }) {
         {/* 갤러리 */}
         <Card title="맵 갤러리" sub={gallery.length + " maps"}>
           <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-            <select value={src} onChange={(e) => setSrc(e.target.value)}><option value="ALL">전체 소스</option><option value="real">실데이터</option><option value="synthetic">합성</option></select>
-            <select value={cls} onChange={(e) => setCls(e.target.value)}><option value="ALL">전체 클래스</option>{WM_CLASSES.map((c) => <option key={c}>{c}</option>)}</select>
+            <select value={cls} onChange={(e) => setCls(e.target.value)} style={{ flex: 1 }}><option value="ALL">전체 클래스</option>{WM_CLASSES.map((c) => <option key={c}>{c}</option>)}</select>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxHeight: 420, overflow: "auto" }}>
             {gallery.map((m) => (
