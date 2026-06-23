@@ -100,7 +100,7 @@ python -m backend.prep_samples && uvicorn backend.main:app --port 8000   # LIVE 
 ## Stage 3 — 결함 위치
 - **B(메인, 실데이터)**: Stage2 실모델 **Grad-CAM** → WM-811K 실제 맵의 결함 위치 히트맵 (합성 무관)
   `python -m src.stage3_localization.gradcam`
-- **A(부록, 합성)**: ELLIMAC 폴리곤→bbox 정제 + cls6 제거 → **YOLO11m mAP@0.5 0.753**(채택, bestV2 0.739↑). YOLO11l 0.755 ≈ 동률(더 큰 모델 무이득) → **11m 유지(효율)**. 검출도 ~0.75 천장.
+- **A(부록, 실제 칩표면 사진)**: ELLIMAC 폴리곤→bbox 정제 + cls6 제거 → **YOLO11m mAP@0.5 0.753**(채택, bestV2 0.739↑). YOLO11l 0.755 ≈ 동률(더 큰 모델 무이득) → **11m 유지(효율)**. 웨이퍼맵과 다른 도메인이라 검출 스킬 데모. 검출도 ~0.75 천장.
   `python -m src.stage3_detection.benchmark`
 
 ---

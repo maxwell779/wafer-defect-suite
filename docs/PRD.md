@@ -20,8 +20,8 @@
 
 **성공 기준 (Definition of Done) — 달성 현황**
 - Stage1: ML 5종 vs DL + 변수기여 + 30-seed CV 결론 ✅ (고전ML>DL, DL 불안정)
-- Stage2: 실데이터 lot-split macro-F1 ≥ 0.85 ✅ → **강화로 0.890±0.007 / 보정 ~0.90** ✅. (자기지도는 **효과 없음**으로 정직 보고 — 당초 가정과 다름)
-- Stage3: ELLIMAC bestV2 mAP@0.5 0.739 ✅ + **실데이터 Grad-CAM 위치탐지(B) 추가** ✅. (YOLO11 재학습은 미실시)
+- Stage2: 실데이터 lot-split macro-F1 ≥ 0.85 ✅ → **SE-ResNet 6-앙상블+보정 0.935** ✅. (자기지도는 **효과 없음**으로 정직 보고 — 당초 가정과 다름)
+- Stage3: ELLIMAC **YOLO11m mAP@0.5 0.753**(11l 0.755 동률, bestV2 0.739↑) ✅ + **실데이터 Grad-CAM 위치탐지(B)** ✅.
 - 웹: 5화면 React + FastAPI LIVE 추론 ✅
 - 전체: README 재현법 + 정직한 결과표(negative 포함) ✅
 
@@ -57,7 +57,7 @@
 ### Stage 3 — 결함 위치 ✅ (A+B)
 - **B(메인, 실데이터)**: Stage2 실모델 **Grad-CAM** → WM-811K 실제 맵 결함 위치 히트맵(합성 무관). `stage3_localization/gradcam.py`
 - **A(부록, 실제 칩표면 사진)**: ELLIMAC 폴리곤→bbox 정제+cls6 제거 → YOLO11m **mAP@0.5 0.753**(11l 동률). `stage3_detection/benchmark.py`
-  - (YOLO11 재학습은 미실시 — bestV2 벤치마크로 대체, 합성이라 일반화 한계 명시)
+  - (YOLO11n/m/l 재학습 비교 → 11m 채택. ELLIMAC은 실제 칩표면 사진이나 웨이퍼맵과 다른 도메인이라 일반화 한계 명시)
 
 ## 5. 데이터 & 라이선스
 > 데이터는 **레포에 포함하지 않음**(대용량·라이선스). `.gitignore`의 `data/`. 사용자는 출처에서 직접 받아 `data/`에 둠.
