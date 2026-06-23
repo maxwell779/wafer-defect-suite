@@ -20,7 +20,7 @@ export default function Dashboard({ go }) {
   const stages = [
     { id: "stage1", n: "01", t: "공정 모니터링", d: "비지도 이상탐지", metric: total + " runs", sub: "6 파라미터 · 5 모델", c: "var(--blue)" },
     { id: "stage2", n: "02", t: "웨이퍼맵 분석", d: "멀티라벨 분류 + 위치", metric: realF1.toFixed(3) + " macro-F1", sub: "8 클래스 · 실데이터", c: "var(--violet)" },
-    { id: "stage3", n: "03", t: "결함 검출/위치", d: "Grad-CAM(실) + YOLO(합성)", metric: "mAP 0.739", sub: "실데이터 위치탐지 포함", c: "var(--green)" },
+    { id: "stage3", n: "03", t: "결함 검출/위치", d: "Grad-CAM(실) + YOLO(합성)", metric: "mAP 0.753", sub: "실데이터 위치탐지 포함", c: "var(--green)" },
   ];
 
   return (
@@ -60,7 +60,7 @@ export default function Dashboard({ go }) {
         {[
           ["Stage 1", "공정 run 센서 6종을 비지도 이상탐지(LOF·OCSVM 등)로 스크리닝 → 의심 lot 플래그 (실데이터 Meruva)"],
           ["Stage 2", "웨이퍼맵 8클래스 멀티라벨 분류 + 결함 위치 추정. 합성→실제 전이 한계까지 정직하게 분석"],
-          ["Stage 3", "실데이터 Grad-CAM 위치탐지(메인) + ELLIMAC YOLO 객체검출(부록·합성, mAP 0.739)"],
+          ["Stage 3", "실데이터 Grad-CAM 위치탐지(메인) + ELLIMAC YOLO11m 객체검출(부록·합성, mAP 0.753)"],
         ].map(([s, d], i) => (
           <div key={i} style={{ display: "flex", gap: 12, fontSize: 13, lineHeight: 1.6 }}>
             <span className="link" style={{ minWidth: 56, color: "var(--blue)" }}>{s}</span><span>{d}</span>

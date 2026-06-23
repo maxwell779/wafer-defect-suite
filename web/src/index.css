@@ -74,3 +74,21 @@ select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; 
 .bar-track { background: #eef2f7; border-radius: 6px; height: 16px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 6px; }
 a.link { color: var(--blue); cursor: pointer; }
+
+/* ── 반응형 ── */
+@media (max-width: 1024px) {
+  .wrap { padding: 18px; }
+  /* 다단 그리드(인라인 grid-template-columns 포함)를 1열로 접기 */
+  .grid[style*="gridTemplateColumns"],
+  .grid[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; gap: 12px; padding: 10px 16px; }
+  .tabs { order: 3; width: 100%; overflow-x: auto; }
+  .demo { margin-left: 0; }
+  .wrap { padding: 12px; }
+  h1.page { font-size: 19px; }
+  .kpi { font-size: 24px; }
+  table { font-size: 12px; }
+  th, td { padding: 5px 6px; }
+}

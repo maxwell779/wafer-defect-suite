@@ -35,7 +35,7 @@ export default function App() {
         {tab === "dashboard" && <Dashboard go={setTab} />}
         {tab === "stage1" && <Stage1Process live={live} />}
         {tab === "stage2" && <Stage2WaferMap live={live} />}
-        {tab === "stage3" && <Stage3Detection />}
+        {tab === "stage3" && <Stage3Detection live={live} />}
         {tab === "stage4" && <Stage4Report />}
         {tab === "experiments" && <Experiments />}
       </div>

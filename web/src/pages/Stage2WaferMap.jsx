@@ -14,10 +14,11 @@ export default function Stage2WaferMap({ live }) {
   const [heat, setHeat] = useState(false);
   const [cmp, setCmp] = useState(false);
   const [liveRes, setLiveRes] = useState(null);
+  const [liveErr, setLiveErr] = useState("");
 
   const gallery = wmaps.filter((m) => (src === "ALL" || m.source === src) && (cls === "ALL" || m.classes.includes(cls)));
   const sel = wmaps.find((m) => m.id === selId);
-  useEffect(() => { setLiveRes(null); }, [selId]);   // 맵 바뀌면 라이브 결과 초기화
+  useEffect(() => { setLiveRes(null); setLiveErr(""); }, [selId]);   // 맵 바뀌면 라이브 결과 초기화
   const staticPred = model === "real" ? sel.pred_real : sel.pred_synth;
   const pred = liveRes ? (model === "real" ? liveRes.pred_real : liveRes.pred_synth) : staticPred;
   const predRows = WM_CLASSES.map((c, i) => ({ label: c, value: pred[i] }));
@@ -68,9 +69,10 @@ export default function Stage2WaferMap({ live }) {
             <button className={"btn" + (model === "real" ? " on" : "")} onClick={() => setModel("real")}>실데이터 모델</button>
             <button className={"btn" + (model === "synth" ? " on" : "")} onClick={() => setModel("synth")}>합성 모델</button>
             {live && <button className="btn" style={{ borderColor: "var(--green)", color: "var(--green)" }}
-              onClick={() => stage2Sample(sel.classes[0]).then(setLiveRes).catch(() => {})}>⚡ LIVE 추론(실모델)</button>}
+              onClick={() => { setLiveErr(""); stage2Sample(sel.classes[0]).then(setLiveRes).catch(() => setLiveErr("백엔드 추론 실패 — 정적 예측 표시")); }}>⚡ LIVE 추론(실모델)</button>}
           </div>
           {liveRes && <div className="note" style={{ marginBottom: 10, fontSize: 12 }}>실시간 추론 결과 — 클래스 {liveRes.true_class} 실제 샘플 (백엔드 WaferCNN)</div>}
+          {liveErr && <div className="note warn" style={{ marginBottom: 10, fontSize: 12 }}>{liveErr}</div>}
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: ng ? "var(--red)" : "var(--green)" }}>
             판정 {ng ? "NG" : "OK"} {hits.map((h) => <span key={h} className="badge b-fail" style={{ marginLeft: 6, fontSize: 11 }}>{h}</span>)}
           </div>

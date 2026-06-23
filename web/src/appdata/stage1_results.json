@@ -7,13 +7,35 @@
     {"model": "AutoEncoder(DL)", "pr_auc": 0.215, "roc_auc": 0.887, "recall_at_50": 0.57, "recall_at_100": 0.67},
     {"model": "IsolationForest", "pr_auc": 0.119, "roc_auc": 0.950, "recall_at_50": 0.29, "recall_at_100": 0.84}
   ],
-  "note_cv": "30-seed 반복 CV mean (양성 7건 노이즈 제거). 고전 ML > DL(불안정).",
+  "note_cv": "base 피처 기준 30-seed 반복 CV mean (양성 7건 노이즈 제거). 고전 ML > DL(불안정).",
+  "progression": [
+    {"stage": "base 피처 (6)", "pr_auc": 0.308, "model": "kNN", "note": "원시 센서 6종"},
+    {"stage": "+선별 교호작용·step (16)", "pr_auc": 0.446, "model": "Mahalanobis", "note": "공분산 모델"},
+    {"stage": "+표적 메커니즘 (저압×고온/식각)", "pr_auc": 0.779, "model": "Mahalanobis", "note": "결함=센서조합 인코딩 ★"},
+    {"stage": "+지도/비지도 하이브리드 (LGB+Maha피처)", "pr_auc": 0.813, "model": "LightGBM", "note": "reps40 best"}
+  ],
+  "ceiling": {
+    "value": 0.81,
+    "std": 0.31,
+    "ci": 0.043,
+    "note": "reps=40 CI 기준 ~0.80–0.81이 천장. 500조합 그리드·스태킹·focal·ECOD/COPOD·PU·SMOTE·MI 전부 못 넘음. 양성 7건이라 표준편차 ±0.31이 압도 = 통계적 한계의 정량 증거."
+  },
+  "negatives": [
+    {"method": "focal(γ=2.0) 커스텀 objective", "pr_auc": 0.802, "verdict": "동률권"},
+    {"method": "스태킹(LGB+ET→logistic)", "pr_auc": 0.800, "verdict": "동률권"},
+    {"method": "OCSVM 피처", "pr_auc": 0.764, "verdict": "낮음"},
+    {"method": "ECOD/COPOD 피처", "pr_auc": 0.71, "verdict": "무이득"},
+    {"method": "SMOTE 오버샘플링", "pr_auc": 0.665, "verdict": "악화"},
+    {"method": "MI 피처선택", "pr_auc": 0.68, "verdict": "무이득"},
+    {"method": "PU learning(신뢰음성60%)", "pr_auc": 0.096, "verdict": "대참사(어려운 음성 제거→과신)"}
+  ],
   "feature_best": {
     "base_best": 0.308,
     "eng_best": 0.446,
     "targeted_best": 0.779,
+    "hybrid_best": 0.813,
     "eng_model": "Mahalanobis + 표적 교호작용(저압×고온/식각)",
-    "note": "결함 7건 전부 pressure≤-2σ+고온/식각 → 메커니즘 표적 피처로 PR-AUC 0.39→0.78(leak-free). 도메인 인코딩이 핵심."
+    "note": "결함 7건 전부 pressure≤-2σ+고온/식각 → 메커니즘 표적 피처로 PR-AUC 0.31→0.78(leak-free). 지도/비지도 하이브리드로 reps40 0.81까지. 도메인 인코딩이 핵심."
   },
   "feature_contrib": {
     "temperature_c": 1.37,

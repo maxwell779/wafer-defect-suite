@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, WM_CLASSES } from "../ui.jsx";
+import { stage3DetectUpload } from "../api.js";
 
 const url = (f) => "/assets/" + f;
 const DET_COLORS = { Center: "#dc2626", Donut: "#d97706", "Edge-Loc": "#2563eb", "Edge-Ring": "#7c3aed", Loc: "#16a34a", Scratch: "#db2777" };
@@ -11,13 +12,28 @@ const DET = {
 };
 const CAM_CLASSES = WM_CLASSES; // 8 클래스 Grad-CAM
 
-export default function Stage3Detection() {
+export default function Stage3Detection({ live }) {
   const [view, setView] = useState("loc"); // loc(B,메인) / det(A,부록)
   const [imgIdx, setImgIdx] = useState(0);
   const [conf, setConf] = useState(0.3);
+  const [liveBoxes, setLiveBoxes] = useState(null);  // 백엔드 실제 추론 결과(이미지별)
+  const [liveErr, setLiveErr] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const boxes = DET[imgIdx].filter((b) => b.conf >= conf);
-  const counts = Object.keys(DET_COLORS).map((c) => [c, DET[imgIdx].filter((b) => b.cls === c && b.conf >= conf).length]);
+  useEffect(() => { setLiveBoxes(null); setLiveErr(""); }, [imgIdx]);  // 이미지 바뀌면 초기화
+
+  // LIVE: 화면의 그 이미지를 업로드 추론(정확히 같은 이미지 → 박스 정합)
+  function runLive() {
+    setBusy(true); setLiveErr("");
+    stage3DetectUpload(url("ellimac_0" + imgIdx + ".jpg"), 0.05)
+      .then((r) => setLiveBoxes(r.boxes || []))
+      .catch(() => setLiveErr("백엔드 추론 실패 — 정적 예시로 폴백"))
+      .finally(() => setBusy(false));
+  }
+
+  const srcBoxes = liveBoxes ?? DET[imgIdx];
+  const boxes = srcBoxes.filter((b) => b.conf >= conf);
+  const counts = Object.keys(DET_COLORS).map((c) => [c, srcBoxes.filter((b) => b.cls === c && b.conf >= conf).length]);
 
   return (
     <div className="grid">
@@ -45,17 +61,20 @@ export default function Stage3Detection() {
 
       {view === "det" && (
         <div className="grid" style={{ gridTemplateColumns: "1fr 280px" }}>
-          <Card title="검출 결과" sub={`ellimac_0${imgIdx} · bestV2 YOLO`}>
+          <Card title="검출 결과" sub={`ellimac_0${imgIdx} · YOLO11m · ${liveBoxes ? "⚡LIVE 실추론" : "정적 예시"}`}>
             <div style={{ position: "relative" }}>
               <img src={url("ellimac_0" + imgIdx + ".jpg")} style={{ width: "100%", borderRadius: 8 }} />
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-                {boxes.map((b, i) => (
+                {boxes.map((b, i) => {
+                  const col = DET_COLORS[b.cls] || "#0ea5e9";
+                  return (
                   <g key={i}>
-                    <rect x={b.x * 100} y={b.y * 100} width={b.w * 100} height={b.h * 100} fill="none" stroke={DET_COLORS[b.cls]} strokeWidth="0.6" />
-                    <rect x={b.x * 100} y={b.y * 100 - 4} width={b.cls.length * 2.2 + 8} height="4" fill={DET_COLORS[b.cls]} />
+                    <rect x={b.x * 100} y={b.y * 100} width={b.w * 100} height={b.h * 100} fill="none" stroke={col} strokeWidth="0.6" />
+                    <rect x={b.x * 100} y={b.y * 100 - 4} width={b.cls.length * 2.2 + 8} height="4" fill={col} />
                     <text x={b.x * 100 + 0.6} y={b.y * 100 - 1} fontSize="2.6" fill="#fff" className="mono">{b.cls} {b.conf.toFixed(2)}</text>
                   </g>
-                ))}
+                  );
+                })}
               </svg>
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
@@ -63,6 +82,16 @@ export default function Stage3Detection() {
               <input type="range" min={0.1} max={0.95} step={0.05} value={conf} onChange={(e) => setConf(+e.target.value)} style={{ flex: 1 }} />
               <span className="mono" style={{ fontWeight: 700 }}>{boxes.length} 검출</span>
             </div>
+            {live && (
+              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                <button className="btn" style={{ borderColor: "var(--green)", color: "var(--green)" }} disabled={busy} onClick={runLive}>
+                  {busy ? "추론 중…" : "⚡ LIVE 추론(이 이미지 업로드)"}
+                </button>
+                {liveBoxes && <span className="badge b-ok">백엔드 YOLO 실추론</span>}
+                {liveErr && <span className="sub" style={{ margin: 0, color: "var(--red)" }}>{liveErr}</span>}
+              </div>
+            )}
+            {!live && <div className="sub" style={{ marginTop: 8 }}>박스는 정적 예시 — 백엔드(LIVE) 연결 시 이 이미지를 실제 YOLO11m로 추론합니다.</div>}
           </Card>
           <div className="grid">
             <Card title="이미지 선택">
@@ -83,7 +112,7 @@ export default function Stage3Detection() {
         </div>
       )}
 
-      {view === "det" && <div className="note warn">⚠ ELLIMAC은 Roboflow <b>합성</b> 데이터 — 폴리곤→bbox 정제 + cls6 18줄 제거 후 bestV2 test <b>mAP@0.5 0.739</b>. 합성이라 실전 일반화 보장 없음(스킬 데모·부록).</div>}
+      {view === "det" && <div className="note warn">⚠ ELLIMAC은 Roboflow <b>합성</b> 데이터 — 폴리곤→bbox 정제 + cls6 18줄 제거 후 YOLO11m test <b>mAP@0.5 0.753</b>(bestV2 0.739↑, 11l 0.755 동률→11m 유지). 합성이라 실전 일반화 보장 없음(스킬 데모·부록).</div>}
     </div>
   );
 }

@@ -145,23 +145,51 @@ export default function Stage1Process({ live }) {
         </Card>
       </div>
 
-      {/* ML vs DL */}
-      <Card title="ML vs DL 모델 비교 (비지도 이상탐지)" sub="소표본(결함 7)에서 PR-AUC 기준 — 라벨은 평가에만(leak-free)">
-        <table>
-          <thead><tr><th>모델</th><th>PR-AUC</th><th>ROC-AUC</th><th>Recall@50</th><th>Recall@100</th></tr></thead>
-          <tbody>
-            {[...s1.comparison].sort((a, b) => b.pr_auc - a.pr_auc).map((m, i) => (
-              <tr key={m.model} style={{ background: i === 0 ? "#f0fdf4" : "" }}>
-                <td style={{ fontWeight: i === 0 ? 700 : 400 }}>{m.model}{i === 0 && <span className="badge b-ok" style={{ marginLeft: 6 }}>1위</span>}{m.model.includes("DL") && <span className="badge b-tag" style={{ marginLeft: 6 }}>DL</span>}</td>
-                <td className="mono">{m.pr_auc}</td><td className="mono">{m.roc_auc}</td><td className="mono">{m.recall_at_50}</td><td className="mono">{m.recall_at_100}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="note" style={{ marginTop: 12 }}>결론 — <b>고전 ML(rank-앙상블 0.304) &gt; DL(AE 0.215, 불안정)</b> (30-seed CV). 양성 7건엔 딥러닝 불필요.
-          {s1.feature_best && <> <b style={{ color: "var(--green)" }}>★ 선별 교호작용 피처로 PR-AUC {s1.feature_best.base_best}→{s1.feature_best.eng_best}</b>({s1.feature_best.eng_model}) — "결함=센서 조합" 메커니즘 정합. 무차별 전수조합은 차원의 저주로 붕괴.</>}
+      {/* ★ 피처 엔지니어링 성능 향상 (핵심 성과) */}
+      <Card title="★ 피처 엔지니어링 성능 향상 (PR-AUC)" sub="도메인 메커니즘 인코딩으로 0.31 → 0.81 (leak-free, reps=40 CI)">
+        <HBars
+          rows={s1.progression.map((p) => ({ label: p.stage, value: p.pr_auc }))}
+          max={1} fmt={(v) => v.toFixed(3)}
+          colorFn={(r) => (r.value >= 0.78 ? "var(--green)" : r.value >= 0.44 ? "var(--blue)" : "#94a3b8")} />
+        <div className="note" style={{ marginTop: 12 }}>
+          <b style={{ color: "var(--green)" }}>★ {s1.feature_best.base_best} → {s1.feature_best.hybrid_best}</b> — 결함 7건이 전부 <b>pressure≤-2σ + 고온/식각</b> 조합 → "결함=센서 비정상 조합" 메커니즘을 표적 피처로 인코딩(0.78), 지도/비지도 하이브리드(LGB+Maha피처)로 reps40 <b>0.81</b>. 무차별 전수조합은 차원의 저주로 붕괴(0.07~0.22).
+        </div>
+        <div className="note warn" style={{ marginTop: 10 }}>
+          <b>정직한 천장 규명(reps=40 CI±{s1.ceiling.ci})</b> — {s1.ceiling.note}
         </div>
       </Card>
+
+      {/* ML vs DL + 신규기법 negative */}
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <Card title="ML vs DL (base 피처, 비지도)" sub="소표본(결함 7)에서 PR-AUC — 라벨은 평가에만(leak-free)">
+          <table>
+            <thead><tr><th>모델</th><th>PR-AUC</th><th>ROC</th><th>R@100</th></tr></thead>
+            <tbody>
+              {[...s1.comparison].sort((a, b) => b.pr_auc - a.pr_auc).map((m, i) => (
+                <tr key={m.model} style={{ background: i === 0 ? "#f0fdf4" : "" }}>
+                  <td style={{ fontWeight: i === 0 ? 700 : 400 }}>{m.model}{m.model.includes("DL") && <span className="badge b-tag" style={{ marginLeft: 6 }}>DL</span>}</td>
+                  <td className="mono">{m.pr_auc}</td><td className="mono">{m.roc_auc}</td><td className="mono">{m.recall_at_100}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="sub" style={{ marginTop: 10 }}>고전 ML(~0.29) &gt; DL(AE 0.215, 불안정 ±0.095). 양성 7건엔 딥러닝 불필요.</div>
+        </Card>
+        <Card title="신규 기법 탐색 (정직한 negative)" sub="천장(~0.81) 못 넘음을 reps=40으로 규명 — '복잡 ≠ 좋음'">
+          <table>
+            <thead><tr><th>방법</th><th>PR-AUC</th><th>판정</th></tr></thead>
+            <tbody>
+              {s1.negatives.map((n) => (
+                <tr key={n.method}>
+                  <td style={{ fontSize: 12.5 }}>{n.method}</td>
+                  <td className="mono">{n.pr_auc}</td>
+                  <td><span className={"badge " + (n.pr_auc >= 0.79 ? "b-warn" : "b-fail")} style={{ fontSize: 10.5 }}>{n.verdict}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -27,3 +27,11 @@ export const stage1Score = (params) =>
 export const stage2Sample = (cls) => j("/api/stage2/sample/" + encodeURIComponent(cls));
 
 export const stage3DetectSample = (idx, conf = 0.25) => j(`/api/stage3/detect_sample/${idx}?conf=${conf}`);
+
+// 화면에 보이는 바로 그 이미지(자산)를 업로드 추론 → idx 불일치 없이 정확한 박스
+export async function stage3DetectUpload(assetUrl, conf = 0.1) {
+  const blob = await (await fetch(assetUrl)).blob();
+  const fd = new FormData();
+  fd.append("file", blob, "img.jpg");
+  return j(`/api/stage3/detect?conf=${conf}`, { method: "POST", body: fd });
+}

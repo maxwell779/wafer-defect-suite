@@ -117,7 +117,10 @@ class Stage2:
 class Stage3:
     def __init__(self):
         from ultralytics import YOLO
-        self.model = YOLO(str(config.ELLIMAC_DIR / "model/Model/bestV2.pt"))
+        # YOLO11m(mAP@0.5 0.753) 채택 > bestV2(0.739). 없으면 bestV2 폴백.
+        cand = config.EXPERIMENTS / "stage3_detection/yolo11m_1280b24/weights/best.pt"
+        path = cand if cand.exists() else config.ELLIMAC_DIR / "model/Model/bestV2.pt"
+        self.model = YOLO(str(path))
 
     def detect(self, source, conf=0.25):
         r = self.model.predict(source, conf=conf, verbose=False)[0]
