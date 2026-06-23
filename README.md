@@ -1,5 +1,8 @@
 # wafer-defect-suite
 
+### 🔗 라이브 데모: **[maxwell779.github.io/wafer-defect-suite](https://maxwell779.github.io/wafer-defect-suite/)**
+> 통합 검사 콘솔(대시보드+의사결정) · Stage1 공정 · Stage2 웨이퍼맵 · Stage3 검출 · Experiments. 정적 DEMO 모드(모델 불필요), 다크모드 지원.
+
 반도체 웨이퍼 결함을 **팹 검사 흐름(공정 → 웨이퍼 패턴 → 결함 위치)** 3단계로 분석하는 end-to-end 포트폴리오.
 세 가지 모달리티(테이블 · 이미지맵 · 검출)에 각각 다른 ML 기법을 적용하고, **정직한 평가(leak-free · per-class · 불균형)** 로 검증한다.
 
