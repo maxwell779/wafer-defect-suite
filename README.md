@@ -160,5 +160,24 @@ data/ , experiments/  데이터·산출물 (git 제외)
 
 > ELLIMAC은 **실제 칩표면 사진**(Roboflow 증강)이며 웨이퍼맵과 도메인이 달라 검출 스킬 데모로 활용. MixedWM38(합성)은 학습이 아니라 "합성→실 전이 실패"를 보이는 대조군으로만 사용.
 
+## 재현 (Reproduce)
+```bash
+# 0) 설치
+pip install -r requirements.txt
+# 1) 데이터 배치: 위 출처에서 받아 data/ 에 둠 (config.py 경로 참고)
+# 2) Stage1 — 공정 이상탐지
+python -m src.stage1_process.run            # 단일 평가
+python -m src.stage1_process.rigor          # 30-seed CV·앙상블
+# 3) Stage2 — 웨이퍼맵 (실데이터 lot-split)
+python -m src.stage2_wafermap.train_real --arch resnet --width 48 --loss asl --augment
+python -m src.stage2_wafermap.rigor         # 임계보정·혼동행렬
+# 4) Stage3 — 검출 / 위치
+python -m src.stage3_detection.train_yolo --model yolo11m.pt --imgsz 1280
+python -m src.stage3_localization.gradcam
+# 테스트
+python -m pytest tests/ -q
+```
+> **가중치(.pt)는 레포 미포함**(`.gitignore`) — 위 학습 스크립트로 생성되어 `experiments/` 에 저장됩니다. 데모 웹은 가중치 없이 정적 DEMO로 동작하고, LIVE 추론 시에만 `experiments/` 의 가중치를 사용합니다.
+
 ## 평가 원칙
 leak-free(lot 그룹 분할, seed 고정, 임계 val-only) · per-class·불균형(macro-F1·mAP·PR-AUC) · **정직성**(전이 실패·negative result 그대로 보고).

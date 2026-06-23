@@ -1,6 +1,22 @@
+# wafer-defect-suite — 전체 파이프라인 의존성 (pip install -r requirements.txt)
+# 핵심 ML/DL
 torch>=2.0
 torchvision>=0.15
 numpy
 pandas
+scipy
 scikit-learn
+lightgbm
+# 이미지/검출 (Stage3)
+ultralytics
+opencv-python
+pillow
+pyyaml
+# 시각화
 matplotlib
+# 백엔드(데모 추론 서버)
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+# 선택(오버나이트 연구 스크립트 tools/overnight/): imbalanced-learn, cleanlab
