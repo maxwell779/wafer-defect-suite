@@ -71,7 +71,7 @@
 - 각 데이터 **출처/라이선스 링크를 README에 명시**, 포트폴리오/연구 목적 사용.
 
 ## 6. 데모 웹 (React) — "Defect Analysis Console"
-상세 사양: [`web_design_prompt.md`](web_design_prompt.md). 5화면 = Dashboard / Stage1 Process / **Stage2 WaferMap(합성vs실데이터 토글=전이 스토리)** / Stage3 Detection / Experiments(정직한 수치·혼동행렬). 백엔드 FastAPI(추론) 또는 정적 데모 JSON 폴백.
+5화면 = 통합 콘솔(Dashboard+의사결정) / Stage1 Process / **Stage2 WaferMap(합성vs실데이터 토글=전이 스토리)** / Stage3 Detection / Experiments(수치·혼동행렬). 백엔드 FastAPI(추론) 또는 정적 데모 JSON 폴백. 데모 스크린샷은 [README](../README.md#데모-웹-화면).
 
 ## 7. 기술 스택 / 구조
 - 학습: PyTorch (`src/stage2_wafermap/` 구축됨)
@@ -83,7 +83,7 @@
 - 학습된 모델: 합성·실데이터·SSL encoder (`experiments/*/best.pt`, git제외)
 - 결과 리포트: 스테이지별 `test_report.txt`/`test_metrics.json` + 종합 비교표
 - 웹 데모: `web/`(프론트+백엔드) 또는 claude.ai 단일파일 데모
-- 문서: README(재현법·결과·데이터 출처), 본 PRD, EDA 노트, HANDOFF
+- 문서: README(재현법·결과·데이터 출처), 본 PRD, [RESULTS](RESULTS.md)(결과 종합), EDA 노트(`notebooks/`)
 
 ## 9. 로드맵
 1. **Stage2 마무리**: SSL 파인튜닝 비교 + 임계보정 ← 지금
