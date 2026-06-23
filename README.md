@@ -12,9 +12,9 @@
 
 | 스테이지 | 질문 | 데이터 | 기법 | 핵심 결과 |
 |---|---|---|---|---|
-| **1. 공정** | 왜 생기나 | Meruva (실, 결함 7/5000) | ML vs DL 이상탐지 + 피처eng | **고전ML > DL**(불안정), 표적 교호작용(저압×고온/식각)으로 PR-AUC **0.39→0.78** |
+| **1. 공정** | 왜 생기나 | Meruva (실, 결함 7/5000) | ML vs DL 이상탐지 + 피처eng + 지도/비지도 하이브리드 | 표적 교호작용으로 PR-AUC **0.31→0.81**(reps40 CI, 비지도 Maha 최강). 500조합·스태킹·PU 등 신규기법 천장 못넘음 규명 |
 | **2. 웨이퍼 패턴** ★ | 어떤 패턴 | MixedWM38(합성)+WM-811K(실) | 멀티라벨 분류·전이·SE-ResNet | 합성 0.985 → **전이 0.364** → SE-ResNet 6앙상블 **0.935**(macro-F1) |
-| **3. 결함 위치** | 어디 | WM-811K(실) / ELLIMAC(합성) | Grad-CAM(메인) + YOLO(부록) | 실데이터 위치탐지 / ELLIMAC bestV2 mAP@0.5 **0.739** |
+| **3. 결함 위치** | 어디 | WM-811K(실) / ELLIMAC(합성) | Grad-CAM(메인) + YOLO(부록) | 실데이터 위치탐지 / ELLIMAC YOLO11m mAP@0.5 **0.753**(11l 무이득) |
 
 ---
 
@@ -34,14 +34,20 @@
 
 **★ 피처 엔지니어링 (데이터셋 메커니즘 = "센서 비정상 조합"에 정합):**
 
-| 피처셋 | 최고 모델 | PR-AUC |
+| 피처셋 / 방법 (reps=30~40 CI) | 최고 모델 | PR-AUC |
 |---|---|---|
 | base (6) | kNN | 0.308 |
 | +선별 교호작용·step (16) | Mahalanobis | 0.446 |
-| **+표적(저압×고온/식각)** | **Mahalanobis** | **0.779** |
+| +표적(저압×고온/식각) — 비지도 | **Mahalanobis** | **0.779** (±0.06, 안정) |
+| +표적, 지도 GBM 전수 | LightGBM | 0.774 |
+| +표적, 비지도 Maha 피처(reps40) | LightGBM | **0.813** ±0.31 (CI±.043) |
+| +표적, focal(γ=2.0) 커스텀 objective | LightGBM | 0.802 |
+| +표적, 스태킹(LGB+ET→logistic)+Maha | Stacking | 0.800 |
+| ECOD/COPOD·SMOTE·MI·PU (신규 탐색) | — | 0.10~0.73 (무이득) |
 | 전수 쌍조합 (36~41) | (붕괴) | 0.07~0.22 |
 
-→ 결함=다변량 조합이라 **공분산 모델(Mahalanobis/GMM)이 최적, IForest(축정렬) 최악**. **선별 교호작용**으로 0.30→**0.45**, 단 **무차별 전수조합은 차원의 저주로 역효과**(도메인 선별>무차별). rank-앙상블 0.304.
+→ 결함=다변량 조합이라 **공분산 모델(Mahalanobis/GMM)이 최적, IForest(축정렬) 최악**. **선별 교호작용**으로 0.30→**0.45→0.78**.
+→ **정직한 천장 규명(reps=40 CI)**: 500조합 그리드·스태킹·focal·ECOD/COPOD·PU·SMOTE·MI 전부 **~0.80–0.81을 못 넘음**. 비지도 Maha 피처가 여전히 최강 신호(0.813). **양성 7건이라 표준편차 ±0.31이 압도** = 통계적 천장의 정량 증거(단일 측정의 0.84+는 분산). PU 프레이밍 0.096(어려운 음성 제거→과신)·ECOD/COPOD 0.71은 정직한 negative. 배포엔 안정적 비지도 Maha 권장. _(상세: `docs/overnight/SUMMARY.md`)_
 위험신호: pressure↓(z −2.31)·etch_rate↑·temp↑.
 `run.py`(단일) · `rigor.py`(30-seed CV·앙상블) · `sweep.py`(피처×모델 스윕)
 
@@ -60,13 +66,14 @@
 - 핵심: **구조적 변화(깊이+SE attention)+앙상블** 이 결정적(0.86→**0.935**). Loc 0.72→0.86, Scratch 0.78→0.87, Near-full→1.0
 - per-class(6앙상블+보정): Edge-Ring 0.994 / NF 1.0 / Center 0.98 / Edge-Loc·Donut 0.93 / Random 0.92 / Scratch 0.87 / Loc 0.86
 - (negative, 정직) 입력 패딩·해상도↑·class-balanced·**SimCLR·MAE·DINOv2·TTA** 모두 효과 없음 → "구조 > 단순튜닝" 입증
+- **★ 천장의 정체 규명(cleanlab)**: 오라벨 1.3%(Loc 최다 121개) 제거해도 Δ-0.005 → 천장은 **고칠 수 있는 노이즈가 아니라 Loc↔Edge-Loc/Center 본질 모호성**. 추가 손실(tversky/ldam/smoothbce)·mixup/cutmix·GeM/maxavg 풀링·ViT·dilated·width96 전부 0.935 못넘음(단일 best=lr2e-3+GeM 0.913). _(상세: `docs/overnight/SUMMARY.md`)_
 - 평가: **lot 그룹 분할**(누수 차단), 다중 seed, 임계 val-only
 - `train_real --augment --width 64 --loss asl` · `rigor`(임계보정·혼동) · `transfer_eval` · `ssl_pretrain`
 
 ## Stage 3 — 결함 위치
 - **B(메인, 실데이터)**: Stage2 실모델 **Grad-CAM** → WM-811K 실제 맵의 결함 위치 히트맵 (합성 무관)
   `python -m src.stage3_localization.gradcam`
-- **A(부록, 합성)**: ELLIMAC 폴리곤→bbox 정제 + cls6 제거 → bestV2 **mAP@0.5 0.739**
+- **A(부록, 합성)**: ELLIMAC 폴리곤→bbox 정제 + cls6 제거 → **YOLO11m mAP@0.5 0.753**(채택, bestV2 0.739↑). YOLO11l 0.755 ≈ 동률(더 큰 모델 무이득) → **11m 유지(효율)**. 검출도 ~0.75 천장.
   `python -m src.stage3_detection.benchmark`
 
 ---
@@ -91,8 +98,9 @@ src/stage1_process/   공정 이상탐지(ML vs DL)
 src/stage2_wafermap/  데이터셋·모델·학습(합성/실데이터)·전이·자기지도·Grad-CAM은 stage3로
 src/stage3_localization/  Grad-CAM 위치탐지(실)   src/stage3_detection/  ELLIMAC YOLO(합성)
 src/common/           metrics(멀티라벨)·seed
+tools/overnight/      대규모 자동 실험 오케스트레이터(CPU∥GPU) · Stage1 메가서치
 web/                  React 데모 콘솔
-docs/                 PRD · EDA · 웹 디자인 프롬프트
+docs/                 PRD · EDA · 웹 디자인 프롬프트 · overnight/SUMMARY.md(대규모 실험 종합)
 data/ , experiments/  데이터·산출물 (git 제외)
 ```
 

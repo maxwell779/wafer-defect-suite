@@ -46,9 +46,57 @@ class FocalLoss(nn.Module):
         return (((1 - pt) ** self.gamma) * ce).sum(dim=1).mean()
 
 
-def build_loss(name, pos_weight=None):
+class TverskyLoss(nn.Module):
+    """멀티라벨 Tversky — FN/FP 비대칭 가중(α=FP, β=FN). β↑ → recall 표적(희귀클래스)."""
+    def __init__(self, alpha=0.3, beta=0.7, smooth=1.0):
+        super().__init__()
+        self.alpha, self.beta, self.smooth = alpha, beta, smooth
+
+    def forward(self, logits, y):
+        p = torch.sigmoid(logits)
+        tp = (p * y).sum(0)
+        fp = (p * (1 - y)).sum(0)
+        fn = ((1 - p) * y).sum(0)
+        tv = (tp + self.smooth) / (tp + self.alpha * fp + self.beta * fn + self.smooth)
+        return (1 - tv).mean()
+
+
+class LDAMLoss(nn.Module):
+    """LDAM(Cao et al. 2019) 멀티라벨 적응 — 희귀클래스에 큰 마진(1/n^0.25). BCE 기반."""
+    def __init__(self, cls_count, max_m=0.5, pos_weight=None):
+        super().__init__()
+        m = 1.0 / torch.sqrt(torch.sqrt(cls_count.float().clamp(min=1)))
+        self.m = (m / m.max() * max_m)
+        self.pos_weight = pos_weight
+
+    def forward(self, logits, y):
+        import torch.nn.functional as F
+        m = self.m.to(logits.device)
+        adj = logits - m * y           # 양성 로짓에서 마진만큼 깎음 → 더 강한 분리 요구
+        return F.binary_cross_entropy_with_logits(adj, y, pos_weight=self.pos_weight)
+
+
+class SmoothBCE(nn.Module):
+    """label smoothing BCE (eps): 과신 억제."""
+    def __init__(self, eps=0.05, pos_weight=None):
+        super().__init__()
+        self.eps, self.pos_weight = eps, pos_weight
+
+    def forward(self, logits, y):
+        import torch.nn.functional as F
+        yt = y * (1 - self.eps) + 0.5 * self.eps
+        return F.binary_cross_entropy_with_logits(logits, yt, pos_weight=self.pos_weight)
+
+
+def build_loss(name, pos_weight=None, cls_count=None):
     if name == "asl":
         return AsymmetricLoss()
     if name == "focal":
         return FocalLoss(gamma=2.0, pos_weight=pos_weight)
+    if name == "tversky":
+        return TverskyLoss()
+    if name == "ldam":
+        return LDAMLoss(cls_count if cls_count is not None else torch.ones(8), pos_weight=pos_weight)
+    if name == "smoothbce":
+        return SmoothBCE(eps=0.05, pos_weight=pos_weight)
     return nn.BCEWithLogitsLoss(pos_weight=pos_weight)

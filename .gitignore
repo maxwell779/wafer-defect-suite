@@ -27,3 +27,6 @@ Thumbs.db
 
 # boosting 부산물
 catboost_info/
+
+# 오버나이트 raw 로그(대용량) — 큐레이션된 SUMMARY.md/RESULTS.md만 추적
+docs/overnight/logs/

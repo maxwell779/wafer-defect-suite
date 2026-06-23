@@ -29,7 +29,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--batch", type=int, default=256)
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--loss", choices=["bce", "asl", "focal"], default="asl")
+    ap.add_argument("--loss", choices=["bce", "asl", "focal", "tversky", "ldam", "smoothbce"], default="asl")
     ap.add_argument("--width", type=int, default=32)
     ap.add_argument("--normal-cap", type=int, default=10000, help="정상('none') 표본 상한(0=전체)")
     ap.add_argument("--workers", type=int, default=0)
@@ -41,7 +41,9 @@ def main():
     ap.add_argument("--size", type=int, default=52, help="입력 해상도")
     ap.add_argument("--pad", action="store_true", help="종횡비 보존 패딩 후 리사이즈")
     ap.add_argument("--balanced", action="store_true", help="class-balanced sampling")
-    ap.add_argument("--arch", choices=["cnn","resnet","resnet_cbam","tvresnet18","tvresnet34"], default="cnn")
+    ap.add_argument("--arch", choices=["cnn","resnet","resnet_cbam","tvresnet18","tvresnet34","vit","dilated"], default="cnn")
+    ap.add_argument("--pool", choices=["gap","gem","maxavg"], default="gap", help="풀링: gem/maxavg=산발결함 표적")
+    ap.add_argument("--mixup", choices=["none","mixup","cutmix"], default="none", help="배치 mixup/cutmix 정규화")
     ap.add_argument("--inmode", choices=["onehot", "coord", "radial", "coord_radial"], default="onehot",
                     help="입력채널: coord/radial=위치 모호성 표적")
     ap.add_argument("--denoise", action="store_true", help="전처리: 고립 불량다이 제거")
@@ -88,7 +90,7 @@ def main():
     te_dl = mk(WaferMapDataset(X, Y, te, **dsk), False)
 
     # ── model/loss/optim ──────────────────────────────────────────────
-    model = build_model(args.arch, in_ch=CH[args.inmode], n_classes=len(cls), width=args.width).to(device)
+    model = build_model(args.arch, in_ch=CH[args.inmode], n_classes=len(cls), width=args.width, pool=args.pool).to(device)
     if args.init:                                   # 사전학습 가중치 로드(전체 or features)
         sd = torch.load(args.init, map_location=device)
         try:
@@ -97,16 +99,35 @@ def main():
         except Exception:
             r = model.load_state_dict(sd, strict=False)  # 전체 가중치(합성→실 파인튜닝)
             print(f"  [init] 전체 가중치 로드: {args.init} (missing {len(r.missing_keys)})")
-    pw = pos_weight_from(Y, tr).to(device) if args.loss in ("bce", "focal") else None
-    criterion = build_loss(args.loss, pos_weight=pw)
+    pw = pos_weight_from(Y, tr).to(device) if args.loss in ("bce", "focal", "ldam", "smoothbce") else None
+    cls_count = torch.as_tensor(Y[tr].sum(0))
+    criterion = build_loss(args.loss, pos_weight=pw, cls_count=cls_count)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
+
+    def mix_batch(x, y, mode, alpha=0.4):
+        """멀티라벨 mixup/cutmix — 소프트 타깃(BCE/ASL/focal 호환)."""
+        lam = float(np.random.beta(alpha, alpha))
+        perm = torch.randperm(x.size(0), device=x.device)
+        if mode == "cutmix":
+            H, W = x.shape[-2:]
+            rh, rw = int(H * (1 - lam) ** 0.5), int(W * (1 - lam) ** 0.5)
+            cy, cx = np.random.randint(H), np.random.randint(W)
+            y1, y2 = max(cy - rh // 2, 0), min(cy + rh // 2, H)
+            x1, x2 = max(cx - rw // 2, 0), min(cx + rw // 2, W)
+            x[:, :, y1:y2, x1:x2] = x[perm, :, y1:y2, x1:x2]
+            lam = 1 - ((y2 - y1) * (x2 - x1) / (H * W))
+        else:
+            x = lam * x + (1 - lam) * x[perm]
+        return x, lam * y + (1 - lam) * y[perm]
 
     best_macro, best_path = -1.0, out / "best.pt"
     for ep in range(1, args.epochs + 1):
         model.train(); t = time.time(); tot = 0.0
         for x, y in tr_dl:
             x, y = x.to(device), y.to(device)
+            if args.mixup != "none" and np.random.rand() < 0.5:
+                x, y = mix_batch(x, y, args.mixup)
             opt.zero_grad(); loss = criterion(model(x), y); loss.backward(); opt.step()
             tot += loss.item() * len(x)
         sched.step()
