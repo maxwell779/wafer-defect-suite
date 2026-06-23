@@ -26,6 +26,8 @@
 `합성 학습 0.985` → `합성→실제 전이 0.36(붕괴)` → `실데이터 직접 0.86` → `CNN강화+보정 0.90` → `SE-ResNet 0.91` → `6-앙상블 0.935`
 - 구조적 변화(깊이 + SE attention) + 앙상블이 결정적(0.86→0.935).
 - **천장 규명**: cleanlab 라벨정제(오라벨 1.3% 제거) Δ-0.005 → 한계는 고칠 수 있는 노이즈가 아니라 **Loc↔Edge-Loc 본질 모호성**. 손실(tversky/ldam/smoothbce)·Mixup/CutMix·GeM/maxavg 풀링·ViT·dilated·width96 전부 0.935 못 넘음.
+- **600조합 메가서치(프록시 4-shard 병렬→상위 12 풀학습)**: 단일모델 best **test 0.9274** (val 0.9232). 단일모델 천장도 ~0.927로 확인 → 0.935는 6-앙상블+보정으로만 도달. (상세 `docs/overnight/RESULTS_stage2mega.md`)
+- **앙상블 고도화(negative)**: 20개 다양 멤버로 mean/greedy/가중/스태킹(LogReg) 전부 비교(leak-free val→test, ±TTA). 최고 = 가중 **0.9304**(no-TTA), 스태킹 0.925. **어느 방법도 기존 6-앙상블+TTA 0.935를 못 넘음** → 다양성·메타러너로도 천장(Loc↔Edge-Loc 라벨 모호성) 불변 재확인. (`src/stage2_wafermap/ensemble2.py`)
 
 ### Stage 3 — 0.739 → 0.753
 `bestV2 0.739` → `YOLO11m 0.753`(채택) / `YOLO11l 0.755`(동률 → 효율적 11m 유지)
