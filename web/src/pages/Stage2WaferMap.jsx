@@ -1,9 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, HBars, WM_CLASSES } from "../ui.jsx";
 import { stage2Sample } from "../api.js";
 import wmaps from "../appdata/wafermaps.json";
 
 const url = (f) => "/" + f; // public/assets
+
+// 52x52 웨이퍼맵 배열 + Grad-CAM 오버레이 캔버스(LIVE 실모델 CAM 렌더)
+function MapCanvas({ map, cam, showCam }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const c = ref.current; if (!c || !map) return;
+    const n = map.length, px = 8; c.width = n * px; c.height = n * px;
+    const x = c.getContext("2d");
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = map[i][j];
+      x.fillStyle = v === 2 ? "#dc2626" : v === 1 ? "#93c5fd" : "#eef2f7";
+      x.fillRect(j * px, i * px, px, px);
+    }
+    if (showCam && cam) {
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        const h = cam[i][j]; if (h < 0.15) continue;
+        const r = Math.round(255 * Math.min(1, h * 1.5)), b = Math.round(255 * Math.max(0, 1 - h * 1.5));
+        x.fillStyle = `rgba(${r},80,${b},${0.55 * h})`;
+        x.fillRect(j * px, i * px, px, px);
+      }
+    }
+  }, [map, cam, showCam]);
+  return <canvas ref={ref} style={{ width: "100%", borderRadius: 8, imageRendering: "pixelated", border: "1px solid var(--border)" }} />;
+}
 
 export default function Stage2WaferMap({ live }) {
   const [cls, setCls] = useState("ALL");
@@ -48,17 +72,19 @@ export default function Stage2WaferMap({ live }) {
           </div>
         </Card>
 
-        {/* 뷰어 */}
-        <Card title="맵 뷰어" sub={`${sel.id} · ${sel.source === "real" ? "실데이터" : "합성"}`}>
-          <div style={{ position: "relative" }}>
-            <img src={url(sel.file)} style={{ width: "100%", borderRadius: 8 }} />
-            {heat && camAvail && <img src={url("assets/cam_" + sel.classes[0] + ".png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.55, borderRadius: 8 }} />}
-          </div>
+        {/* 뷰어 — LIVE면 실모델 맵+CAM 캔버스, 아니면 정적 이미지+CAM png */}
+        <Card title="맵 뷰어" sub={liveRes?.wafermap ? "⚡LIVE 실모델 맵 + Grad-CAM" : `${sel.id} · 실데이터`}>
+          {liveRes?.wafermap
+            ? <MapCanvas map={liveRes.wafermap} cam={liveRes.gradcam} showCam={heat} />
+            : <div style={{ position: "relative" }}>
+                <img src={url(sel.file)} style={{ width: "100%", borderRadius: 8 }} />
+                {heat && camAvail && <img src={url("assets/cam_" + sel.classes[0] + ".png")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.55, borderRadius: 8 }} />}
+              </div>}
           <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
-            <button className={"btn" + (heat ? " on" : "")} disabled={!camAvail} onClick={() => setHeat(!heat)}>
+            <button className={"btn" + (heat ? " on" : "")} onClick={() => setHeat(!heat)} aria-pressed={heat}>
               위치 히트맵 {heat ? "ON" : "OFF"}
             </button>
-            <span className="sub" style={{ margin: 0 }}>{camAvail ? "Grad-CAM(실데이터) 결함 위치" : "합성맵은 위치탐지 미지원"}</span>
+            <span className="sub" style={{ margin: 0 }}>{liveRes?.wafermap ? "백엔드 실모델 Grad-CAM" : "Grad-CAM(저장본) 결함 위치"}</span>
           </div>
         </Card>
 

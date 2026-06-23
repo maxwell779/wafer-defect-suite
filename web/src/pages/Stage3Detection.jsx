@@ -19,6 +19,19 @@ export default function Stage3Detection({ live }) {
 
   useEffect(() => { setLiveBoxes(null); setLiveErr(""); }, [imgIdx]);  // 이미지 바뀌면 초기화
 
+  // LIVE 활성 상태에서 confidence 바꾸면 해당 임계로 재추론(debounce)
+  useEffect(() => {
+    if (!live || !liveBoxes) return;
+    const tmr = setTimeout(() => {
+      setBusy(true);
+      stage3DetectUpload(url(ei(imgIdx)), conf)
+        .then((r) => setLiveBoxes(r.boxes || []))
+        .catch(() => {})
+        .finally(() => setBusy(false));
+    }, 400);
+    return () => clearTimeout(tmr);
+  }, [conf]); // eslint-disable-line
+
   // LIVE: 화면의 그 이미지를 업로드 추론(정확히 같은 이미지 → 박스 정합)
   function runLive() {
     setBusy(true); setLiveErr("");

@@ -9,7 +9,34 @@
   --red: #dc2626;
   --amber: #d97706;
   --violet: #7c3aed;
+  /* 차트용(다크모드 대응) */
+  --grid: #eef2f7;
+  --axis: #94a3b8;
+  --axis2: #475569;
+  --chartbg: #ffffff;
+  --hover: #f8fafc;
 }
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --panel: #151c2c;
+  --border: #2a3550;
+  --ink: #e6edf6;
+  --muted: #93a4bd;
+  --grid: #243047;
+  --axis: #8ea2c0;
+  --axis2: #b9c6dc;
+  --chartbg: #151c2c;
+  --hover: #1c2638;
+}
+[data-theme="dark"] .b-ok { background: #14331f; color: #86efac; }
+[data-theme="dark"] .b-warn { background: #3a2e0c; color: #fcd34d; }
+[data-theme="dark"] .b-fail { background: #3a1414; color: #fca5a5; }
+[data-theme="dark"] .b-tag { background: #1e2547; color: #a5b4fc; }
+[data-theme="dark"] tr.sel { background: #1e2a44; }
+[data-theme="dark"] .tab:hover { background: #1c2638; }
+[data-theme="dark"] .note { background: #111a2b; color: #b9c6dc; }
+[data-theme="dark"] .warn { background: #2a230e; border-color: #5c4d18; color: #fcd34d; }
+[data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] .btn { background: #1c2638; color: var(--ink); }
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -84,6 +111,18 @@ a.link { color: var(--blue); cursor: pointer; }
 /* KPI 카드 상단 악센트 바 */
 .kpicard { position: relative; overflow: hidden; }
 .kpicard::before { content:""; position:absolute; top:0; left:0; right:0; height:4px; background: var(--accent, var(--blue)); }
+/* 다크모드 보정 */
+[data-theme="dark"] .app { background: var(--bg); }
+[data-theme="dark"] tbody tr:hover { background: var(--hover); }
+[data-theme="dark"] .card { box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
+/* 접근성: 키보드 포커스 */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* 로딩 스켈레톤 */
+.skel { background: linear-gradient(90deg, var(--grid) 25%, var(--hover) 37%, var(--grid) 63%); background-size: 400% 100%; animation: sk 1.2s ease infinite; border-radius: 8px; }
+@keyframes sk { 0% { background-position: 100% 0 } 100% { background-position: 0 0 } }
+/* 빈 상태 */
+.empty { text-align: center; color: var(--muted); padding: 28px 10px; font-size: 14px; }
+.theme-btn { border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 8px; padding: 5px 9px; cursor: pointer; font-size: 14px; }
 
 /* ── 반응형 ── */
 @media (max-width: 1024px) {

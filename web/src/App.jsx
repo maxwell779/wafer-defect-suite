@@ -5,6 +5,7 @@ import Stage2WaferMap from "./pages/Stage2WaferMap.jsx";
 import Stage3Detection from "./pages/Stage3Detection.jsx";
 import Experiments from "./pages/Experiments.jsx";
 import { apiHealth } from "./api.js";
+import { useI18n, useTheme } from "./i18n.jsx";
 
 const TABS = [
   ["dashboard", "통합 콘솔"],
@@ -17,6 +18,8 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState("dashboard");
   const [live, setLive] = useState(false);
+  const { lang, t, setLang } = useI18n();
+  const [theme, setTheme] = useTheme();
   useEffect(() => { apiHealth().then(setLive); }, []);
   return (
     <div className="app">
@@ -24,10 +27,14 @@ export default function App() {
         <div className="brand"><span className="dot" /> Wafer Defect Console</div>
         <div className="tabs">
           {TABS.map(([id, label]) => (
-            <button key={id} className={"tab" + (tab === id ? " active" : "")} onClick={() => setTab(id)}>{label}</button>
+            <button key={id} className={"tab" + (tab === id ? " active" : "")} onClick={() => setTab(id)}>{t(label)}</button>
           ))}
         </div>
-        <span className="demo" style={live ? { color: "var(--green)", borderColor: "var(--green)" } : {}}>{live ? "LIVE" : "DEMO"}</span>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          <button className="theme-btn" title="언어" aria-label="언어 전환" onClick={() => setLang(lang === "ko" ? "en" : "ko")}>{lang === "ko" ? "EN" : "한"}</button>
+          <button className="theme-btn" title="테마" aria-label="다크모드 전환" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "🌙"}</button>
+          <span className="demo" style={live ? { color: "var(--green)", borderColor: "var(--green)" } : {}}>{live ? "LIVE" : "DEMO"}</span>
+        </div>
       </div>
       <div className="wrap">
         {tab === "dashboard" && <Dashboard go={setTab} />}

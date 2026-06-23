@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Card } from "../ui.jsx";
+import { Card, downloadCSV } from "../ui.jsx";
+import { useI18n } from "../i18n.jsx";
 import runs from "../appdata/process_runs.json";
 import wmaps from "../appdata/wafermaps.json";
 import metrics from "../appdata/stage2_metrics.json";
@@ -24,11 +25,27 @@ export default function Dashboard({ go }) {
   const realMaps = wmaps.filter((m) => m.source === "real").length;
   const defects = runs.filter((r) => r.defect === 1).sort((a, b) => b.anomaly_score - a.anomaly_score);
 
+  const { t } = useI18n();
   const [disp, setDisp] = useState({});          // wafer_id → 처리상태
   const [log, setLog] = useState([]);            // 처리 이력
   const [sel, setSel] = useState(defects[0].wafer_id);
   const [pattern, setPattern] = useState("Center");
+  const [qFilter, setQFilter] = useState("ALL"); // 상태 필터
+  const [q, setQ] = useState("");                // wafer 검색
   const w = runs.find((r) => r.wafer_id === sel);
+
+  const queue = defects.filter((d) =>
+    (qFilter === "ALL" || (qFilter === "미처리" ? !disp[d.wafer_id] : disp[d.wafer_id] === qFilter)) &&
+    (!q || String(d.wafer_id).includes(q)));
+
+  function exportCSV() {
+    const rows = [["wafer_id", "process_step", "anomaly_score", "status"],
+      ...defects.map((d) => [d.wafer_id, d.process_step, d.anomaly_score, disp[d.wafer_id] || "미처리"])];
+    downloadCSV("defect_queue.csv", rows);
+  }
+  function exportLogCSV() {
+    downloadCSV("action_log.csv", [["log"], ...log.map((l) => [l])]);
+  }
 
   const devs = Object.entries(FEAT).map(([k, [label, mean]]) => {
     const d = w[k] - mean; return { label, k, val: w[k], dev: d, pct: (d / mean) * 100 };
@@ -52,18 +69,18 @@ export default function Dashboard({ go }) {
   ];
 
   const kpis = [
-    ["검사 완료", `${total}`, "공정 run (lot)", "var(--blue)"],
-    ["결함 검출", `${defects.length}건`, `${((defects.length / total) * 100).toFixed(2)}% 결함율`, "var(--red)"],
-    ["격리 대기", `${pending}건`, `고위험 미처리 (처리완료 ${handled})`, "var(--amber)"],
-    ["양품률", `${yieldPct}%`, `정상 ${total - defects.length} / ${total}`, "var(--green)"],
+    ["검사 완료", `${total}`, "공정 run (lot)", "var(--blue)", "stage1"],
+    ["결함 검출", `${defects.length}건`, `${((defects.length / total) * 100).toFixed(2)}% 결함율`, "var(--red)", "stage1"],
+    ["격리 대기", `${pending}건`, `고위험 미처리 (처리완료 ${handled})`, "var(--amber)", "stage3"],
+    ["양품률", `${yieldPct}%`, `정상 ${total - defects.length} / ${total}`, "var(--green)", "stage2"],
   ];
 
   return (
     <div className="grid">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 className="page">통합 검사 콘솔</h1>
-          <div className="sub" style={{ marginBottom: 0 }}>공정(왜) → 패턴(무엇) → 위치(어디) 분석을 종합해 결함 lot을 판정·조치하는 작업자 화면</div>
+          <h1 className="page">{t("통합 검사 콘솔")}</h1>
+          <div className="sub" style={{ marginBottom: 0 }}>{t("공정(왜) → 패턴(무엇) → 위치(어디) 분석을 종합해 결함 lot을 판정·조치하는 작업자 화면")}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn" onClick={() => go("stage1")}>Stage 1 공정</button>
@@ -73,11 +90,12 @@ export default function Dashboard({ go }) {
         </div>
       </div>
 
-      {/* 운영 KPI */}
+      {/* 운영 KPI (클릭 시 해당 단계로 이동) */}
       <div className="grid" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
-        {kpis.map(([t, v, d, c], i) => (
-          <div key={i} className="card kpicard" style={{ "--accent": c }}>
-            <div className="klabel">{t}</div>
+        {kpis.map(([label, v, d, c, to], i) => (
+          <div key={i} className="card kpicard clickable" style={{ "--accent": c }} onClick={() => go(to)} role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && go(to)}>
+            <div className="klabel">{t(label)}</div>
             <div className="kpi" style={{ color: c }}>{v}</div>
             <div className="sub" style={{ margin: 0, fontSize: 13.5 }}>{d}</div>
           </div>
@@ -97,22 +115,34 @@ export default function Dashboard({ go }) {
 
       {/* 통합 의사결정 콘솔 (Stage4 통합) */}
       <div className="grid" style={{ gridTemplateColumns: "320px 1fr" }}>
-        <Card title="결함 큐" sub="이상점수순 · 행 클릭 → 우측 리포트">
-          <div style={{ maxHeight: 420, overflow: "auto" }}>
+        <Card title={t("결함 큐")} sub="이상점수순 · 행 클릭 → 우측 리포트">
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            <input type="text" placeholder="Wafer 검색" value={q} onChange={(e) => setQ(e.target.value)} style={{ flex: 1 }} aria-label="Wafer 검색" />
+            <select value={qFilter} onChange={(e) => setQFilter(e.target.value)} aria-label="상태 필터">
+              <option value="ALL">{t("상태 전체")}</option><option value="미처리">{t("미처리")}</option>
+              <option value="격리">격리</option><option value="재검사">재검사</option><option value="보정">보정</option><option value="완료">완료</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            <button className="btn" style={{ flex: 1 }} onClick={exportCSV} aria-label="결함 큐 CSV 내보내기">⬇ {t("CSV 내보내기")}</button>
+            <button className="btn" style={{ flex: 1 }} onClick={() => window.print()} aria-label="PDF 인쇄">🖨 {t("PDF/인쇄")}</button>
+          </div>
+          <div style={{ maxHeight: 360, overflow: "auto" }}>
             <table>
               <thead><tr><th>Wafer</th><th>점수</th><th>상태</th></tr></thead>
               <tbody>
-                {defects.map((d) => (
+                {queue.map((d) => (
                   <tr key={d.wafer_id} className={d.wafer_id === sel ? "sel" : ""} onClick={() => setSel(d.wafer_id)}>
                     <td className="mono">{d.wafer_id}</td>
                     <td className="mono" style={{ color: d.anomaly_score >= 0.5 ? "var(--red)" : "inherit" }}>{d.anomaly_score.toFixed(2)}</td>
                     <td>{disp[d.wafer_id]
                       ? <span className={"badge " + DISP_BADGE[disp[d.wafer_id]]}>{disp[d.wafer_id]}</span>
-                      : <span className="sub" style={{ margin: 0, fontSize: 12 }}>미처리</span>}</td>
+                      : <span className="sub" style={{ margin: 0, fontSize: 12 }}>{t("미처리")}</span>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {queue.length === 0 && <div className="empty">조건에 맞는 wafer가 없습니다.</div>}
           </div>
           <div className="sub" style={{ margin: "8px 0 4px" }}>웨이퍼 패턴 (Stage 2 판정)</div>
           <select value={pattern} onChange={(e) => setPattern(e.target.value)} style={{ width: "100%" }}>
@@ -151,12 +181,15 @@ export default function Dashboard({ go }) {
 
       {/* 처리 이력 + 파이프라인 설명 */}
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-        <Card title="처리 이력" sub={`이번 세션 조치 ${log.length}건`}>
+        <Card title={t("처리 이력")} sub={`이번 세션 조치 ${log.length}건`}>
           {log.length === 0
-            ? <div className="sub" style={{ margin: 0 }}>아직 조치 없음 — 우측 리포트에서 격리/재검사/보정/완료를 실행하면 기록됩니다.</div>
-            : <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13.5 }}>
-                {log.map((l, i) => <div key={i} className="mono" style={{ color: i === 0 ? "var(--ink)" : "var(--muted)" }}>{l}</div>)}
-              </div>}
+            ? <div className="empty">아직 조치 없음 — 우측 리포트에서 격리/재검사/보정/완료를 실행하면 기록됩니다.</div>
+            : <>
+                <button className="btn" style={{ marginBottom: 10 }} onClick={exportLogCSV}>⬇ {t("CSV 내보내기")}</button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13.5 }}>
+                  {log.map((l, i) => <div key={i} className="mono" style={{ color: i === 0 ? "var(--ink)" : "var(--muted)" }}>{l}</div>)}
+                </div>
+              </>}
         </Card>
         <Card title="파이프라인 동작" sub="제조 검사 흐름 그대로 — 왜 → 무엇 → 어디 → 통합">
           <div style={{ display: "flex", flexDirection: "column", gap: 9, fontSize: 13.5, lineHeight: 1.55 }}>

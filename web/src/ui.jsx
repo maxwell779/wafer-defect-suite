@@ -2,6 +2,18 @@ import React from "react";
 
 export const WM_CLASSES = ["Center", "Donut", "Edge-Loc", "Edge-Ring", "Loc", "Near-full", "Scratch", "Random"];
 
+/* CSV 다운로드 — rows: 배열의 배열(첫 행 헤더 포함) */
+export function downloadCSV(filename, rows) {
+  const csv = rows.map((r) => r.map((c) => {
+    const s = String(c ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(",")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });   // BOM=엑셀 한글
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 export const STATUS_BADGE = { OK: "b-ok", WARN: "b-warn", FAIL: "b-fail" };
 
 export function Card({ title, sub, children, style }) {
@@ -43,8 +55,8 @@ export function LineChart({ series, xlabels, h = 240, yMin = 0, yMax = 1 }) {
         const v = yMin + g * (yMax - yMin);
         return (
           <g key={i}>
-            <line x1={pad} x2={W - pad} y1={Y(v)} y2={Y(v)} stroke="#eef2f7" />
-            <text x={6} y={Y(v) + 3} fontSize="10" fill="#94a3b8">{v.toFixed(2)}</text>
+            <line x1={pad} x2={W - pad} y1={Y(v)} y2={Y(v)} stroke="var(--grid)" />
+            <text x={6} y={Y(v) + 3} fontSize="10" fill="var(--axis)">{v.toFixed(2)}</text>
           </g>
         );
       })}
@@ -52,11 +64,15 @@ export function LineChart({ series, xlabels, h = 240, yMin = 0, yMax = 1 }) {
         <g key={si}>
           <polyline points={s.points.map((v, i) => `${X(i)},${Y(v)}`).join(" ")} fill="none"
             stroke={s.color} strokeWidth="2" strokeDasharray={s.dash || "0"} />
-          {s.points.map((v, i) => <circle key={i} cx={X(i)} cy={Y(v)} r="3.2" fill={s.color} />)}
+          {s.points.map((v, i) => (
+            <circle key={i} cx={X(i)} cy={Y(v)} r="3.2" fill={s.color}>
+              <title>{s.name} · {xlabels[i]}: {v.toFixed(3)}</title>
+            </circle>
+          ))}
         </g>
       ))}
       {xlabels.map((l, i) => (
-        <text key={i} x={X(i)} y={h - 10} fontSize="10.5" fill="#475569" textAnchor="middle">{l}</text>
+        <text key={i} x={X(i)} y={h - 10} fontSize="10.5" fill="var(--axis2)" textAnchor="middle">{l}</text>
       ))}
     </svg>
   );
@@ -82,7 +98,9 @@ export function ControlChart({ values, h = 230 }) {
       ))}
       <polyline points={values.map((v, i) => `${X(i)},${Y(v)}`).join(" ")} fill="none" stroke="#60a5fa" strokeWidth="1" />
       {values.map((v, i) => (
-        <circle key={i} cx={X(i)} cy={Y(v)} r="1.8" fill={v > ucl || v < lcl ? "#dc2626" : "#3b82f6"} />
+        <circle key={i} cx={X(i)} cy={Y(v)} r="1.8" fill={v > ucl || v < lcl ? "#dc2626" : "#3b82f6"}>
+          <title>#{i + 1}: {v.toFixed(1)}{v > ucl || v < lcl ? " (관리한계 벗어남)" : ""}</title>
+        </circle>
       ))}
     </svg>
   );
@@ -99,10 +117,12 @@ export function Scatter({ points, h = 230, xlab = "x", ylab = "y" }) {
     <svg viewBox={`0 0 ${W} ${h}`} style={{ width: "100%" }}>
       {points.map((p, i) => (
         <circle key={i} cx={X(p.x)} cy={Y(p.y)} r={p.defect ? 4 : 2.4}
-          fill={p.defect ? "#dc2626" : "#93c5fd"} opacity={p.defect ? 0.95 : 0.6} />
+          fill={p.defect ? "#dc2626" : "#93c5fd"} opacity={p.defect ? 0.95 : 0.6}>
+          <title>{xlab} {p.x.toFixed(1)} · {ylab} {p.y.toFixed(2)}{p.defect ? " · 결함" : ""}</title>
+        </circle>
       ))}
-      <text x={W / 2} y={h - 6} fontSize="10" fill="#94a3b8" textAnchor="middle">{xlab}</text>
-      <text x={10} y={14} fontSize="10" fill="#94a3b8">{ylab}</text>
+      <text x={W / 2} y={h - 6} fontSize="10" fill="var(--axis)" textAnchor="middle">{xlab}</text>
+      <text x={10} y={14} fontSize="10" fill="var(--axis)">{ylab}</text>
     </svg>
   );
 }
@@ -124,7 +144,7 @@ export function Confusion({ labels, matrix }) {
               {row.map((v, j) => {
                 const t = v / (max || 1);
                 const bg = diag(i, j) ? `rgba(22,163,74,${0.15 + t * 0.7})` : `rgba(220,38,38,${t * 0.8})`;
-                return <td key={j} title={`${labels[i]}→${labels[j]}: ${v}`} style={{ textAlign: "center", background: v ? bg : "#fff", color: t > 0.5 ? "#fff" : "#334155", borderColor: "#f1f5f9" }}>{v}</td>;
+                return <td key={j} title={`${labels[i]}→${labels[j]}: ${v}`} style={{ textAlign: "center", background: v ? bg : "var(--chartbg)", color: t > 0.5 ? "#fff" : "var(--ink)", borderColor: "var(--border)" }}>{v}</td>;
               })}
             </tr>
           ))}
