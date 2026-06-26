@@ -1,0 +1,56 @@
+{
+  "reference": "wafer_id 1-2500",
+  "current": "wafer_id 2501-5000",
+  "n_ref": 2500,
+  "n_cur": 2500,
+  "process_drift": false,
+  "drift_share": 0.0,
+  "defect_rate": {
+    "ref": 0.0024,
+    "cur": 0.0004
+  },
+  "features": [
+    {
+      "feature": "temperature_c",
+      "psi": 0.0083,
+      "ks_stat": 0.0292,
+      "ks_p": 0.2369,
+      "level": "stable"
+    },
+    {
+      "feature": "pressure_torr",
+      "psi": 0.0096,
+      "ks_stat": 0.038,
+      "ks_p": 0.0541,
+      "level": "stable"
+    },
+    {
+      "feature": "gas_flow_sccm",
+      "psi": 0.0044,
+      "ks_stat": 0.0292,
+      "ks_p": 0.2369,
+      "level": "stable"
+    },
+    {
+      "feature": "etch_rate_nm_min",
+      "psi": 0.0027,
+      "ks_stat": 0.0104,
+      "ks_p": 0.9993,
+      "level": "stable"
+    },
+    {
+      "feature": "voltage_v",
+      "psi": 0.0112,
+      "ks_stat": 0.0304,
+      "ks_p": 0.1983,
+      "level": "stable"
+    },
+    {
+      "feature": "current_ma",
+      "psi": 0.0094,
+      "ks_stat": 0.018,
+      "ks_p": 0.8129,
+      "level": "stable"
+    }
+  ]
+}

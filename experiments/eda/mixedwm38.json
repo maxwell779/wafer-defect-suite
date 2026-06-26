@@ -1,0 +1,24 @@
+{
+  "n": 38015,
+  "map_shape": [
+    52,
+    52
+  ],
+  "class_counts": {
+    "Center": 13000,
+    "Donut": 12000,
+    "Edge-Loc": 13000,
+    "Edge-Ring": 12000,
+    "Loc": 18000,
+    "Near-full": 149,
+    "Scratch": 19000,
+    "Random": 866
+  },
+  "mix": {
+    "normal": 1000,
+    "single": 7015,
+    "multi": 30000
+  },
+  "rarest": "Near-full",
+  "most_common": "Scratch"
+}

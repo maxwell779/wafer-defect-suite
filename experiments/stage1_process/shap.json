@@ -1,0 +1,52 @@
+{
+  "model": "IsolationForest",
+  "n_eval": 1006,
+  "n_defect": 7,
+  "global_importance": {
+    "voltage_v": 0.4464,
+    "temperature_c": 0.4301,
+    "gas_flow_sccm": 0.4076,
+    "current_ma": 0.404,
+    "pressure_torr": 0.3668,
+    "etch_rate_nm_min": 0.3653
+  },
+  "top_feature": "voltage_v",
+  "defect_mean_shap": {
+    "temperature_c": 0.967,
+    "pressure_torr": 1.124,
+    "gas_flow_sccm": -0.1972,
+    "etch_rate_nm_min": 0.7074,
+    "voltage_v": -0.1106,
+    "current_ma": -0.2187
+  },
+  "per_defect_top": [
+    {
+      "top_feature": "temperature_c",
+      "shap": 1.2652
+    },
+    {
+      "top_feature": "etch_rate_nm_min",
+      "shap": 1.4556
+    },
+    {
+      "top_feature": "etch_rate_nm_min",
+      "shap": 2.0488
+    },
+    {
+      "top_feature": "temperature_c",
+      "shap": 2.0124
+    },
+    {
+      "top_feature": "temperature_c",
+      "shap": 1.9348
+    },
+    {
+      "top_feature": "temperature_c",
+      "shap": 2.3353
+    },
+    {
+      "top_feature": "etch_rate_nm_min",
+      "shap": 2.4291
+    }
+  ]
+}
